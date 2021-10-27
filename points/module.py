@@ -124,7 +124,7 @@ class Points(commands.Cog):
 
         # if the user is not present, add them to second field
         if ctx.author.id not in [u.user_id for u in users]:
-            author = UserStats.get(ctx.guild.id, ctx.author.id)
+            author = UserStats.get_stats(ctx.guild.id, ctx.author.id)
 
             embed.add_field(
                 name=_(ctx, "Your score"),

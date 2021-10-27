@@ -33,3 +33,6 @@ msgstr Nejlepších {limit}
 
 msgid , position {offset}
 msgstr , pozice {offset}
+
+msgid Unknown
+msgstr

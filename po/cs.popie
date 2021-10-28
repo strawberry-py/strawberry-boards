@@ -58,6 +58,24 @@ msgstr Emoji s neutrální karmou
 msgid Emojis with negative karma
 msgstr Emoji s negativní karmou
 
+msgid All server emojis have been assigned a karma value.
+msgstr Všechny server emoji mají karma hodnotu.
+
+msgid Karma vote over the value of {emoji} started.
+msgstr Hlasování o karma hodnotě {emoji} začalo.
+
+msgid The vote will run for **{minutes}** minutes.
+msgstr Hlasovat je možné **{minutes}** minut.
+
+msgid Required minimum vote count is **{count}**.
+msgstr Minimální počet hlasů je **{count}**.
+
+msgid Vote over {emoji} failed.
+msgstr Hlasování o hodnotě {emoji} se nezdařilo.
+
+msgid Karma value of {emoji} is **{value}**.
+msgstr Karma hodnota {emoji} je **{value}**.
+
 msgid Usual values are only 1, 0 or -1.
 msgstr Obvyklé hodnoty jsou pouze 1, 0 nebo -1.
 

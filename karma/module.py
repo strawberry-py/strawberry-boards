@@ -1,4 +1,6 @@
-from typing import Optional, List, Union
+import asyncio
+import math
+from typing import Optional, List, Tuple, Union
 
 from emoji import UNICODE_EMOJI as _UNICODE_EMOJI
 
@@ -133,9 +135,102 @@ class Karma(commands.Cog):
                     await ctx.send(line)
 
     @karma_.command(name="vote")
-    async def karma_vote(self, ctx, emoji: str = None):
+    async def karma_vote(
+        self, ctx, emoji: Optional[Union[discord.PartialEmoji, str]] = None
+    ):
         """Vote over emoji's karma value."""
-        pass
+        await utils.Discord.delete_message(ctx.message)
+
+        if emoji is None:
+            voted_ids = [e.emoji_id for e in DiscordEmoji.get_all(ctx.guild.id)]
+            for guild_emoji in ctx.guild.emojis:
+                if guild_emoji.id not in voted_ids:
+                    emoji = guild_emoji
+                    break
+
+        if emoji is None:
+            await ctx.author.send(
+                _(ctx, "All server emojis have been assigned a karma value.")
+            )
+            return
+        emoji_name: str = getattr(emoji, "name", str(emoji))
+
+        guild_size, time_limit, voter_limit = Karma._get_karma_vote_config(ctx.guild)
+        await guild_log.debug(
+            ctx.author,
+            ctx.channel,
+            f"Guild size is {guild_size}: "
+            + f"karma vote takes {time_limit} minutes and {voter_limit} voters.",
+        )
+
+        message = (
+            _(ctx, "Karma vote over the value of {emoji} started.")
+            + "\n"
+            + _(ctx, "The vote will run for **{minutes}** minutes.")
+            + " "
+            + _(ctx, "Required minimum vote count is **{count}**.")
+        )
+
+        vote_message = await ctx.send(
+            message.format(emoji=str(emoji), minutes=time_limit, count=voter_limit)
+        )
+
+        # Set the value to zero, so we can run this command multiple times
+        # without starting a vote over the same emoji over and over.
+        if type(emoji) is discord.PartialEmoji:
+            DiscordEmoji.add(ctx.guild.id, emoji.id, 0)
+
+        await guild_log.info(
+            ctx.author, ctx.channel, f"Karma vote over emoji '{emoji_name}' started."
+        )
+
+        votes = {"🔼": 0, "0⃣": 0, "🔽": 0}
+        emoji_labels = {"🔼": "+1", "0⃣": "0", "🔽": "-1"}
+        for vote_option in votes.keys():
+            await vote_message.add_reaction(vote_option)
+
+        await asyncio.sleep(time_limit * 60)
+
+        # Fetch updated message with the votes
+        vote_message = await vote_message.channel.fetch_message(vote_message.id)
+        for reaction in vote_message.reactions:
+            votes[reaction.emoji] = reaction.count - 1
+
+        log_message: str = (
+            f"Karma vote over emoji '{emoji_name}' ended: "
+            + ", ".join(f"{v}x {emoji_labels[k]}" for k, v in votes.items())
+            + "."
+        )
+
+        result: Optional[int] = None
+        if votes["🔼"] > votes["0⃣"] and votes["🔼"] > votes["🔽"]:
+            result = 1
+        elif votes["0⃣"] > votes["🔽"] and votes["0⃣"] > votes["🔼"]:
+            result = 0
+        elif votes["🔽"] > votes["0⃣"] and votes["🔽"] > votes["🔼"]:
+            result = -1
+        else:
+            await guild_log.info(
+                ctx.author,
+                ctx.channel,
+                _(ctx, log_message + " Inconconclusive, aborted."),
+            )
+            await ctx.send(_(ctx, "Vote over {emoji} failed.").format(emoji=str(emoji)))
+            return
+
+        if type(emoji) is discord.Emoji:
+            DiscordEmoji.add(ctx.guild.id, emoji.id, result)
+        elif type(emoji) is str:
+            UnicodeEmoji.add(ctx.guild.id, emoji, result)
+
+        await guild_log.info(
+            ctx.author, ctx.channel, log_message + f" Setting to {result}."
+        )
+        await ctx.send(
+            _(ctx, "Karma value of {emoji} is **{value}**.").format(
+                emoji=str(emoji), value=result
+            )
+        )
 
     @karma_.command(name="set")
     async def karma_set(self, ctx, emoji: Union[discord.PartialEmoji, str], value: int):
@@ -280,6 +375,32 @@ class Karma(commands.Cog):
     async def karma_takingboard(self, ctx):
         """Display karma givers."""
         pass
+
+    #
+
+    @staticmethod
+    def _get_karma_vote_config(guild: discord.Guild) -> Tuple[str, int, int]:
+        """Based on guild size, determine vote parameters.
+
+        Returns:
+            Guild size, time limit (in minutes) and voter limit.
+        """
+        member_count = len([m for m in guild.members if not m.bot])
+
+        if member_count < 5:
+            # tiny guilds
+            return ("tiny", 60, math.ceil(member_count / 2))
+
+        if member_count < 20:
+            # small guilds
+            return ("small", 60, 5)
+
+        if member_count < 250:
+            # big guilds
+            return ("big", 120, 10)
+
+        # large guilds
+        return ("large", 180, 15)
 
 
 def setup(bot) -> None:

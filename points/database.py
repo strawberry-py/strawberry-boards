@@ -74,6 +74,7 @@ class UserStats(database.base):
             .order_by(order)
             .offset(offset)
             .limit(limit)
+            .all()
         )
 
         return query
@@ -83,7 +84,7 @@ class UserStats(database.base):
 
     def __repr__(self) -> str:
         return (
-            f'<{self.__class__.__name} idx="{self.idx}" guild_id="{self.guild_id}" '
+            f'<{self.__class__.__name__} idx="{self.idx}" guild_id="{self.guild_id}" '
             f'user_id="{self.user_id}" points="{self.points}">'
         )
 

@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands, tasks
 
 import database.config
-from core import utils, i18n, TranslationContext
+from core import utils, i18n, TranslationContext, check
 
 from .database import UserStats, BoardOrder
 
@@ -35,6 +35,7 @@ class Points(commands.Cog):
 
     @commands.guild_only()
     @commands.group(name="points")
+    @commands.check(check.spamchannel)
     async def points(self, ctx):
         """Get information about user points"""
         await utils.Discord.send_help(ctx)
@@ -67,7 +68,7 @@ class Points(commands.Cog):
         await ctx.send(embed=embed)
         await utils.Discord.delete_message(ctx.message)
 
-    @points.command(name="leaderboard")
+    @points.command(name="leaderboard", aliases=["best"])
     async def points_leaderboard(self, ctx):
         """Points leaderboard"""
         embed = utils.Discord.create_embed(
@@ -104,7 +105,7 @@ class Points(commands.Cog):
         await message.add_reaction("▶")
         await utils.Discord.delete_message(ctx.message)
 
-    @points.command(name="loserboard")
+    @points.command(name="loserboard", aliases=["worst"])
     async def points_loserboard(self, ctx):
         """Points loserboard"""
         embed = utils.Discord.create_embed(
@@ -184,14 +185,14 @@ class Points(commands.Cog):
         if str(reaction) not in ("⏪", "◀", "▶"):
             return
 
-        ctx = TranslationContext(guild_id, user.id)
+        tc = TranslationContext(guild_id, reaction.message.author.id)
 
         if (
             len(reaction.message.embeds) != 1
             or type(reaction.message.embeds[0].title) != str
             or (
-                not reaction.message.embeds[0].title.startswith(_(ctx, "Points 🏆"))
-                and not reaction.message.embeds[0].title.startswith(_(ctx, "Points 💩"))
+                not reaction.message.embeds[0].title.startswith(_(tc, "Points 🏆"))
+                and not reaction.message.embeds[0].title.startswith(_(tc, "Points 💩"))
             )
         ):
             return
@@ -199,7 +200,7 @@ class Points(commands.Cog):
         embed = reaction.message.embeds[0]
 
         # get ordering
-        if embed.title.endswith(_(ctx, "Points 💩")):
+        if embed.title == _(tc, "Points 💩"):
             order = BoardOrder.ASC
         else:
             order = BoardOrder.DESC
@@ -221,21 +222,21 @@ class Points(commands.Cog):
         if offset < 0:
             return await utils.Discord.remove_reaction(reaction.message, reaction, user)
 
-        users = UserStats.get_best(guild_id, BoardOrder.ASC, limit=10, offset=0)
+        users = UserStats.get_best(guild_id, order, 10, offset)
         value = Points._get_board(reaction.message.guild, user, users)
         if not value:
             # offset too big
             return await utils.Discord.remove_reaction(reaction.message, reaction, user)
 
         if order == BoardOrder.DESC:
-            table_name = _(ctx, "Best {limit}")
+            table_name = _(tc, "Best {limit}")
         else:
-            table_name = _(ctx, "Worst {limit}")
+            table_name = _(tc, "Worst {limit}")
 
         name = table_name.format(limit=10)
 
         if offset:
-            name += _(ctx, ", position {offset}").format(offset=offset + 1)
+            name += _(tc, ", position {offset}").format(offset=offset + 1)
 
         embed.clear_fields()
         embed.add_field(name=name, value=value, inline=False)
@@ -245,7 +246,7 @@ class Points(commands.Cog):
             author = UserStats.get_stats(guild_id, user.id)
 
             embed.add_field(
-                name=_(ctx, "Your score"),
+                name=_(tc, "Your score"),
                 value="`{points:>8}` … {name}".format(
                     points=author.points,
                     name="**" + utils.Text.sanitise(user.display_name) + "**",

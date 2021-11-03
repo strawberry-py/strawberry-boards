@@ -93,32 +93,6 @@ class Points(commands.Cog):
         else:
             await ctx.send(_(ctx, "No stats found."))
 
-    @points.command(name="loserboard", aliases=["worst"])
-    async def points_loserboard(self, ctx):
-        """Points loserboard"""
-        title = _(ctx, "Points loserboard")
-        description = _(ctx, "Score, ascending")
-
-        embeds = Points._create_embeds(
-            ctx=ctx,
-            title=title,
-            description=description,
-            order=BoardOrder.ASC,
-            element_count=10,
-            page_count=10,
-        )
-
-        await utils.Discord.delete_message(ctx.message)
-
-        if len(embeds) > 1:
-            scrollable_embed = utils.ScrollableEmbed()
-            scrollable_embed.from_iter(ctx, embeds)
-            await scrollable_embed.scroll(ctx)
-        elif len(embeds) == 1:
-            await ctx.send(embed=embeds[0])
-        else:
-            await ctx.send(_(ctx, "No stats found."))
-
     # Listeners
 
     @commands.Cog.listener()
@@ -179,6 +153,8 @@ class Points(commands.Cog):
 
         author = UserStats.get_stats(ctx.guild.id, ctx.author.id)
 
+        limit = min(UserStats.get_count(ctx.guild.id), page_count * element_count)
+
         for page_number in range(page_count):
             users = UserStats.get_best(
                 ctx.guild.id, order, element_count, page_number * element_count
@@ -196,7 +172,7 @@ class Points(commands.Cog):
             value = Points._get_page(ctx.guild, ctx.author, users)
 
             page.add_field(
-                name=_(ctx, "Top {limit}").format(limit=(page_count * element_count)),
+                name=_(ctx, "Top {limit}").format(limit=limit),
                 value=value,
                 inline=False,
             )

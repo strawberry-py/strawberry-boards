@@ -51,6 +51,15 @@ class UserStats(database.base):
         session.merge(query)
         session.commit()
 
+    def get_count(guild_id: int) -> int:
+        count = (
+            session.query(func.count(UserStats.user_id))
+            .filter_by(guild_id=guild_id)
+            .scalar()
+        )
+
+        return count
+
     @staticmethod
     def get_position(guild_id: int, points: int) -> int:
         result = (

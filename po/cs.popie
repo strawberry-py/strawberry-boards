@@ -13,20 +13,14 @@ msgstr Body (nejvyšší)
 msgid Score, descending
 msgstr Skóre, sestupně
 
+msgid No stats found.
+msgstr Žádná data nebyla nalezena.
+
+msgid Unknown
+msgstr Neznámý
+
 msgid Top {limit}
 msgstr Top {limit}
 
 msgid Your score
 msgstr Tvoje skóre
-
-msgid Worst {limit}
-msgstr Nejhorších {limit}
-
-msgid Best {limit}
-msgstr Nejlepších {limit}
-
-msgid , position {offset}
-msgstr , pozice {offset}
-
-msgid Unknown
-msgstr

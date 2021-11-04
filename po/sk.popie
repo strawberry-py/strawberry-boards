@@ -13,20 +13,14 @@ msgstr
 msgid Score, descending
 msgstr
 
+msgid No stats found.
+msgstr
+
+msgid Unknown
+msgstr
+
 msgid Top {limit}
 msgstr
 
 msgid Your score
-msgstr
-
-msgid Worst {limit}
-msgstr
-
-msgid Best {limit}
-msgstr
-
-msgid , position {offset}
-msgstr
-
-msgid Unknown
 msgstr

@@ -84,14 +84,8 @@ class Points(commands.Cog):
 
         await utils.Discord.delete_message(ctx.message)
 
-        if len(embeds) > 1:
-            scrollable_embed = utils.ScrollableEmbed()
-            scrollable_embed.from_iter(ctx, embeds)
-            await scrollable_embed.scroll(ctx)
-        elif len(embeds) == 1:
-            await ctx.send(embed=embeds[0])
-        else:
-            await ctx.send(_(ctx, "No stats found."))
+        scrollable_embed = utils.ScrollableEmbed(ctx, embeds)
+        await scrollable_embed.scroll()
 
     # Listeners
 

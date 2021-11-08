@@ -272,7 +272,12 @@ class IgnoredChannel(database.base):
         return query
 
     @staticmethod
-    def add(guild_id: int, channel_id: int) -> IgnoredChannel:
+    def get_all(guild_id: int) -> List[IgnoredChannel]:
+        query = session.query(IgnoredChannel).filter_by(guild_id=guild_id).all()
+        return query
+
+    @staticmethod
+    def add(guild_id: int, channel_id: int) -> Optional[IgnoredChannel]:
         if IgnoredChannel.get(guild_id, channel_id) is not None:
             return
         query = IgnoredChannel(guild_id=guild_id, channel_id=channel_id)

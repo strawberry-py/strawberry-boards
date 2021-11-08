@@ -130,6 +130,27 @@ msgstr
 msgid Karma takingboard
 msgstr
 
+msgid Karma is not ignored in any of the channels.
+msgstr
+
+msgid Channel ID
+msgstr
+
+msgid Channel name
+msgstr
+
+msgid Karma is already ignored in that channel.
+msgstr
+
+msgid Karma will be ignored in {channel} from now on.
+msgstr
+
+msgid Karma is not ignored in that channel.
+msgstr
+
+msgid Karma will not be ignored in {channel} from now on.
+msgstr
+
 msgid Worst {limit}
 msgstr
 

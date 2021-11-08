@@ -553,6 +553,69 @@ class Karma(commands.Cog):
         scrollable.from_iter(ctx, embeds)
         await scrollable.scroll(ctx)
 
+    @commands.check(check.acl)
+    @karma_.group(name="ignore")
+    async def karma_ignore(self, ctx):
+        """Manage channels where karma is disabled."""
+        await utils.Discord.send_help(ctx)
+
+    @commands.check(check.acl)
+    @karma_ignore.command(name="list")
+    async def karma_ignore_list(self, ctx):
+        """List channels where karma is disabled."""
+        ignored_channels = IgnoredChannel.get_all(ctx.guild.id)
+        if not ignored_channels:
+            await ctx.reply(_(ctx, "Karma is not ignored in any of the channels."))
+            return
+
+        channels = [ctx.guild.get_channel(c.channel_id) for c in ignored_channels]
+
+        table_pages: List[str] = utils.Text.create_table(
+            channels,
+            {
+                "id": _(ctx, "Channel ID"),
+                "name": _(ctx, "Channel name"),
+            },
+        )
+        for table_page in table_pages:
+            await ctx.send("```" + table_page + "```")
+
+    @commands.check(check.acl)
+    @karma_ignore.command(name="set")
+    async def karma_ignore_set(self, ctx, channel: discord.TextChannel):
+        """Ignore karma in supplied channel."""
+        ignored_channel = IgnoredChannel.add(ctx.guild.id, channel.id)
+        if ignored_channel is None:
+            await ctx.reply(_(ctx, "Karma is already ignored in that channel."))
+            return
+
+        await guild_log.info(
+            ctx.author, ctx.channel, f"Karma will be ignored in #{channel.name}"
+        )
+        await ctx.reply(
+            _(ctx, "Karma will be ignored in {channel} from now on.").format(
+                channel=channel.mention
+            )
+        )
+
+    @commands.check(check.acl)
+    @karma_ignore.command(name="unset")
+    async def karma_ignore_unset(self, ctx, channel: discord.TextChannel):
+        """Stop ignoring karma in supplied channel."""
+        unignored_channel = IgnoredChannel.remove(ctx.guild.id, channel.id)
+        if unignored_channel is None:
+            await ctx.reply(_(ctx, "Karma is not ignored in that channel."))
+            return
+
+        await guild_log.info(
+            ctx.author, ctx.channel, f"Karma won't be ignored in #{channel.name}"
+        )
+        await ctx.reply(
+            _(ctx, "Karma will not be ignored in {channel} from now on.").format(
+                channel=channel.mention
+            )
+        )
+
     #
 
     @staticmethod

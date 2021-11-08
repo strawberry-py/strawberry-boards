@@ -130,6 +130,27 @@ msgstr Karma (rozdaná)
 msgid Karma takingboard
 msgstr Karma (sebraná)
 
+msgid Karma is not ignored in any of the channels.
+msgstr Karma není ignorována v~žádném kanálu.
+
+msgid Channel ID
+msgstr ID kanálu
+
+msgid Channel name
+msgstr Název kanálu
+
+msgid Karma is already ignored in that channel.
+msgstr Karma už v tomto kanálu ignorována je.
+
+msgid Karma will be ignored in {channel} from now on.
+msgstr Karma bude v #{channel} ignorována.
+
+msgid Karma is not ignored in that channel.
+msgstr V tomto kanálu karma ignorována není.
+
+msgid Karma will not be ignored in {channel} from now on.
+msgstr Karma už v #{channel} ignorována nebude.
+
 msgid Worst {limit}
 msgstr Nejhorších {limit}
 

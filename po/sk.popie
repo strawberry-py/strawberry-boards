@@ -24,3 +24,135 @@ msgstr
 
 msgid Your score
 msgstr
+
+msgid User karma
+msgstr
+
+msgid Karma
+msgstr
+
+msgid Karma given
+msgstr
+
+msgid Karma taken
+msgstr
+
+msgid This emoji does not have karma value.
+msgstr
+
+msgid Emoji karma
+msgstr
+
+msgid Karma value
+msgstr
+
+msgid No emoji has karma value on this server.
+msgstr
+
+msgid Emojis with positive karma
+msgstr
+
+msgid Emojis with neutral karma
+msgstr
+
+msgid Emojis with negative karma
+msgstr
+
+msgid All server emojis have been assigned a karma value.
+msgstr
+
+msgid Karma vote over the value of {emoji} started.
+msgstr
+
+msgid The vote will run for **{minutes}** minutes.
+msgstr
+
+msgid Required minimum vote count is **{count}**.
+msgstr
+
+msgid Vote over {emoji} failed.
+msgstr
+
+msgid Karma value of {emoji} is **{value}**.
+msgstr
+
+msgid Usual values are only 1, 0 or -1.
+msgstr
+
+msgid The value has been set.
+msgstr
+
+msgid Karma is disabled in message's channel.
+msgstr
+
+msgid Message karma
+msgstr
+
+msgid Total karma value of [the message]({link}) is {value} karma points.
+msgstr
+
+msgid **{user}** in #{channel}
+msgstr
+
+msgid Message content
+msgstr
+
+msgid Positive reactions
+msgstr
+
+msgid Negative reactions
+msgstr
+
+msgid Neutral reactions
+msgstr
+
+msgid {member} got {value} karma points.
+msgstr
+
+msgid Every member got {value} karma points
+msgstr
+
+msgid Karma leaderboard
+msgstr
+
+msgid Karma data not yet available.
+msgstr
+
+msgid Karma loserboard
+msgstr
+
+msgid Score, ascending
+msgstr
+
+msgid Karma givingboard
+msgstr
+
+msgid Karma takingboard
+msgstr
+
+msgid Karma is not ignored in any of the channels.
+msgstr
+
+msgid Channel ID
+msgstr
+
+msgid Channel name
+msgstr
+
+msgid Karma is already ignored in that channel.
+msgstr
+
+msgid Karma will be ignored in {channel} from now on.
+msgstr
+
+msgid Karma is not ignored in that channel.
+msgstr
+
+msgid Karma will not be ignored in {channel} from now on.
+msgstr
+
+msgid Worst {limit}
+msgstr
+
+msgid Unknown member
+msgstr

@@ -216,20 +216,22 @@ class Karma(commands.Cog):
         emojis_negative = [e for e in emojis if e.value < 0]
 
         def format_emojis(emojis) -> List[str]:
-            emoji_lists = {}
+            emoji_lists = []
             for i, emoji in enumerate(emojis):
                 if type(emoji) == UnicodeEmoji:
                     emoji_str = emoji.emoji
                 elif type(emoji) == DiscordEmoji:
                     emoji_str = f"<:pumpkin:{emoji.emoji_id}>"
 
-                idx = i // 8
-                if i % 8 == 0:
-                    emoji_lists[idx] = []
-                emoji_lists[idx].append(emoji_str)
+                emoji_lists.append(emoji_str)
 
-            lines = [" ".join(line) for line in emoji_lists.values()]
-            return lines
+            lines = [emoji_lists[i : i + 8] for i in range(0, len(emoji_lists), 8)]
+            lines = [" ".join(line) for line in lines]
+
+            messages = [lines[i : i + 3] for i in range(0, len(lines), 3)]
+            messages = ["\n".join(message) for message in messages]
+
+            return messages
 
         if len(emojis_positive):
             await ctx.send(_(ctx, "Emojis with positive karma"))

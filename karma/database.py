@@ -205,6 +205,10 @@ class UnicodeEmoji(database.base):
 
     @staticmethod
     def add(guild_id: int, emoji: str, value: int) -> UnicodeEmoji:
+        if value == 0:
+            UnicodeEmoji.remove(guild_id, emoji)
+            return
+
         query = UnicodeEmoji.get(guild_id, emoji)
         if not query:
             query = UnicodeEmoji(guild_id=guild_id, emoji=emoji)

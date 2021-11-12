@@ -1,158 +1,158 @@
 msgid Points
-msgstr
+msgstr Body
 
 msgid **{user}'s** points
-msgstr
+msgstr Body užívateľa **{user}'s**
 
 msgid Points and ranking
-msgstr
+msgstr Body a hodnotenie
 
 msgid Points leaderboard
-msgstr
+msgstr Bodový rebríček
 
 msgid Score, descending
-msgstr
+msgstr Skóre, zostupne
 
 msgid No stats found.
-msgstr
+msgstr Žiadne štatistiky sa nenašli.
 
 msgid Unknown
-msgstr
+msgstr Neznámy
 
 msgid Top {limit}
-msgstr
+msgstr Top limit je {limit}
 
 msgid Your score
-msgstr
+msgstr Tvoje skóre
 
 msgid User karma
-msgstr
+msgstr Karma užívateľa
 
 msgid Karma
-msgstr
+msgstr Karma
 
 msgid Karma given
-msgstr
+msgstr Rozdaná karma
 
 msgid Karma taken
-msgstr
+msgstr Odobraná karma
 
 msgid This emoji does not have karma value.
-msgstr
+msgstr Tento emoji nie je ohodnotený.
 
 msgid Emoji karma
-msgstr
+msgstr Hodnota emoji
 
 msgid Karma value
-msgstr
+msgstr Hodnota karmy
 
 msgid No emoji has karma value on this server.
-msgstr
+msgstr Tento emoji nemá na tomto serveri pridelenú hodnotu
 
 msgid Emojis with positive karma
-msgstr
+msgstr Kladne ohodnotené emoji
 
 msgid Emojis with neutral karma
-msgstr
+msgstr Neutrálne ohodnotené emoji
 
 msgid Emojis with negative karma
-msgstr
+msgstr Záporne ohodnotené emoji
 
 msgid All server emojis have been assigned a karma value.
-msgstr
+msgstr Všetkým emoji na tomto serveri je pridelená hodnota.
 
 msgid Karma vote over the value of {emoji} started.
-msgstr
+msgstr Začalo sa hlasovanie o hodnote {emoji}.
 
 msgid The vote will run for **{minutes}** minutes.
-msgstr
+msgstr Hlasovanie potrvá **{minutes}** minút.
 
 msgid Required minimum vote count is **{count}**.
-msgstr
+msgstr Potrebný počet hlasov je **{count}**.
 
 msgid Vote over {emoji} failed.
-msgstr
+msgstr Hlasovanie o hodnote {emoji} bolo neúspešné.
 
 msgid Karma value of {emoji} is **{value}**.
-msgstr
+msgstr Hodnota emoji {emoji} je **{value}**.
 
 msgid Usual values are only 1, 0 or -1.
-msgstr
+msgstr Používané hodnoty sú len 1, 0 alebo -1.
 
 msgid The value has been set.
-msgstr
+msgstr Hodnota bola pridelená.
 
 msgid Karma is disabled in message's channel.
-msgstr
+msgstr Karma je v tomto kanáli deaktivovaná.
 
 msgid Message karma
-msgstr
+msgstr Hodnota správy
 
 msgid Total karma value of [the message]({link}) is {value} karma points.
-msgstr
+msgstr Celková hodnota správy [the message]({link}) má {value} karmy.
 
 msgid **{user}** in #{channel}
-msgstr
+msgstr Užívateľ **{user}** v kanáli #{channel}
 
 msgid Message content
-msgstr
+msgstr Obsah správy
 
 msgid Positive reactions
-msgstr
+msgstr Pozitívne reakcie
 
 msgid Negative reactions
-msgstr
+msgstr Negatívne reakcie
 
 msgid Neutral reactions
-msgstr
+msgstr Neutrálne reakcie
 
 msgid {member} got {value} karma points.
-msgstr
+msgstr Užívateľ {member} dostal {value} karmy.
 
 msgid Every member got {value} karma points
-msgstr
+msgstr Každý člen dostal {value} karmy.
 
 msgid Karma leaderboard
-msgstr
+msgstr Karma rebríček
 
 msgid Karma data not yet available.
-msgstr
+msgstr Dáta ohľadom karmy nie sú k dispozícii.
 
 msgid Karma loserboard
-msgstr
+msgstr Rebríček najnižšej karmy
 
 msgid Score, ascending
-msgstr
+msgstr Skóre, vzostupne
 
 msgid Karma givingboard
-msgstr
+msgstr Rebríček rozdanej karmy
 
 msgid Karma takingboard
-msgstr
+msgstr Rebríček odobranej karmy
 
 msgid Karma is not ignored in any of the channels.
-msgstr
+msgstr Karma sa v žiadnom kanáli neignoruje.
 
 msgid Channel ID
-msgstr
+msgstr ID kanálu
 
 msgid Channel name
-msgstr
+msgstr Meno kanálu
 
 msgid Karma is already ignored in that channel.
-msgstr
+msgstr V tomto kanáli sa už karma ignoruje.
 
 msgid Karma will be ignored in {channel} from now on.
-msgstr
+msgstr Odteraz sa bude karma v kanáli {channel} ignorovať.
 
 msgid Karma is not ignored in that channel.
-msgstr
+msgstr V tomto kanáli sa karma neignoruje.
 
 msgid Karma will not be ignored in {channel} from now on.
-msgstr
+msgstr Odteraz sa karma v kanáli {channel} prestane ignorovať.
 
 msgid Worst {limit}
-msgstr
+msgstr Najhorší limit je {limit}
 
 msgid Unknown member
-msgstr
+msgstr Neznámy člen

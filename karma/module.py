@@ -1,5 +1,6 @@
 import asyncio
 import math
+import re
 from typing import Optional, List, Tuple, Union
 
 from emoji import UNICODE_EMOJI as _UNICODE_EMOJI
@@ -26,6 +27,8 @@ del _UNICODE_EMOJI
 _ = i18n.Translator("modules/boards").translate
 bot_log = logger.Bot.logger()
 guild_log = logger.Guild.logger()
+
+EMOJI_REGEX = "^:[a-zA-Z0-9]+:$"
 
 
 class Karma(commands.Cog):
@@ -72,7 +75,7 @@ class Karma(commands.Cog):
             return
 
         message_author: Tuple[int, int] = (reaction.guild_id, message.author.id)
-        reaction_author: Tuple[int, int] = (reaction.guild_id, reaction.member.id)
+        reaction_author: Tuple[int, int] = (reaction.guild_id, reaction.user_id)
 
         return (message_author, reaction_author, emoji_value)
 
@@ -183,6 +186,17 @@ class Karma(commands.Cog):
         if type(emoji) is discord.PartialEmoji:
             karma_emoji = DiscordEmoji.get(ctx.guild.id, emoji.id)
             emoji_url = emoji.url
+        elif re.match(EMOJI_REGEX, emoji):
+            found_emoji = discord.utils.get(
+                ctx.guild.emojis, name=emoji.replace(":", "")
+            )
+            if not found_emoji:
+                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                return
+
+            karma_emoji = DiscordEmoji.get(ctx.guild.id, emoji.id)
+            emoji_url = emoji.url
+
         else:
             karma_emoji = UnicodeEmoji.get(ctx.guild.id, emoji)
             emoji_url = discord.Embed.Empty
@@ -221,7 +235,7 @@ class Karma(commands.Cog):
                 if type(emoji) == UnicodeEmoji:
                     emoji_str = emoji.emoji
                 elif type(emoji) == DiscordEmoji:
-                    emoji_str = f"<:pumpkin:{emoji.emoji_id}>"
+                    emoji_str = str(self.bot.get_emoji(emoji.emoji_id))
 
                 emoji_lists.append(emoji_str)
 
@@ -269,6 +283,16 @@ class Karma(commands.Cog):
                 _(ctx, "All server emojis have been assigned a karma value.")
             )
             return
+
+        if type(emoji) == str and re.match(EMOJI_REGEX, emoji):
+            found_emoji = discord.utils.get(
+                ctx.guild.emojis, name=emoji.replace(":", "")
+            )
+            if not found_emoji:
+                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                return
+            emoji = found_emoji
+
         emoji_name: str = getattr(emoji, "name", str(emoji))
 
         guild_size, time_limit, voter_limit = Karma._get_karma_vote_config(ctx.guild)
@@ -349,6 +373,32 @@ class Karma(commands.Cog):
         )
 
     @commands.check(check.acl)
+    @karma_.command(name="unset")
+    async def karma_unset(self, ctx, emoji: Union[discord.PartialEmoji, str]):
+        """Set emoji's karma value."""
+        emoji_name: str
+        if type(emoji) is discord.PartialEmoji:
+            DiscordEmoji.remove(ctx.guild.id, emoji.id)
+            emoji_name = emoji.name
+        elif re.match(EMOJI_REGEX, emoji):
+            found_emoji = discord.utils.get(
+                ctx.guild.emojis, name=emoji.replace(":", "")
+            )
+            if not found_emoji:
+                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                return
+            DiscordEmoji.remove(ctx.guild.id, found_emoji.id)
+            emoji_name = found_emoji.name
+        else:
+            UnicodeEmoji.remove(ctx.guild.id, emoji)
+            emoji_name = emoji
+
+        await guild_log.info(
+            ctx.author, ctx.channel, f"Karma value of '{emoji_name}' unset."
+        )
+        await ctx.reply(_(ctx, "The value has been unset."))
+
+    @commands.check(check.acl)
     @karma_.command(name="set")
     async def karma_set(self, ctx, emoji: Union[discord.PartialEmoji, str], value: int):
         """Set emoji's karma value."""
@@ -359,6 +409,15 @@ class Karma(commands.Cog):
         if type(emoji) is discord.PartialEmoji:
             DiscordEmoji.add(ctx.guild.id, emoji.id, value)
             emoji_name = emoji.name
+        elif re.match(EMOJI_REGEX, emoji):
+            found_emoji = discord.utils.get(
+                ctx.guild.emojis, name=emoji.replace(":", "")
+            )
+            if not found_emoji:
+                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                return
+            DiscordEmoji.add(ctx.guild.id, found_emoji.id, value)
+            emoji_name = found_emoji.name
         else:
             UnicodeEmoji.add(ctx.guild.id, emoji, value)
             emoji_name = emoji
@@ -491,8 +550,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)
@@ -511,8 +569,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)
@@ -531,8 +588,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)
@@ -551,8 +607,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)

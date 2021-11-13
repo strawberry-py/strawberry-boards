@@ -1,27 +1,3 @@
-msgid Points
-msgstr Body
-
-msgid **{user}'s** points
-msgstr Body užívateľa **{user}'s**
-
-msgid Points and ranking
-msgstr Body a hodnotenie
-
-msgid Points leaderboard
-msgstr Bodový rebríček
-
-msgid Score, descending
-msgstr Skóre, zostupne
-
-msgid Unknown
-msgstr Neznámy
-
-msgid Top {limit}
-msgstr Top limit je {limit}
-
-msgid Your score
-msgstr Tvoje skóre
-
 msgid User karma
 msgstr Karma užívateľa
 
@@ -118,6 +94,9 @@ msgstr Každý člen dostal {value} karmy.
 msgid Karma leaderboard
 msgstr Karma rebríček
 
+msgid Score, descending
+msgstr Skóre, zostupne
+
 msgid Karma data not yet available.
 msgstr Dáta ohľadom karmy nie sú k dispozícii.
 
@@ -154,5 +133,29 @@ msgstr V tomto kanáli sa karma neignoruje.
 msgid Karma will not be ignored in {channel} from now on.
 msgstr Odteraz sa karma v kanáli {channel} prestane ignorovať.
 
+msgid Top {limit}
+msgstr Top limit je {limit}
+
 msgid Worst {limit}
 msgstr Najhorší limit je {limit}
+
+msgid Your score
+msgstr Tvoje skóre
+
+msgid Unknown member
+msgstr Neznámý užívateľ
+
+msgid Points
+msgstr Body
+
+msgid **{user}'s** points
+msgstr Body užívateľa **{user}'s**
+
+msgid Points and ranking
+msgstr Body a hodnotenie
+
+msgid Points leaderboard
+msgstr Bodový rebríček
+
+msgid Unknown
+msgstr Neznámy

@@ -75,7 +75,7 @@ class Karma(commands.Cog):
             return
 
         message_author: Tuple[int, int] = (reaction.guild_id, message.author.id)
-        reaction_author: Tuple[int, int] = (reaction.guild_id, reaction.member.id)
+        reaction_author: Tuple[int, int] = (reaction.guild_id, reaction.user_id)
 
         return (message_author, reaction_author, emoji_value)
 
@@ -550,8 +550,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)
@@ -570,8 +569,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)
@@ -590,8 +588,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)
@@ -610,8 +607,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Karma data not yet available."))
             return
 
-        scrollable = utils.ScrollableEmbed()
-        scrollable.from_iter(ctx, embeds)
+        scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll(ctx)
 
     @commands.check(check.acl)

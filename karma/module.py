@@ -551,7 +551,7 @@ class Karma(commands.Cog):
             return
 
         scrollable = utils.ScrollableEmbed(ctx, embeds)
-        await scrollable.scroll(ctx)
+        await scrollable.scroll()
 
     @commands.check(check.acl)
     @karma_.command(name="loserboard")
@@ -570,7 +570,7 @@ class Karma(commands.Cog):
             return
 
         scrollable = utils.ScrollableEmbed(ctx, embeds)
-        await scrollable.scroll(ctx)
+        await scrollable.scroll()
 
     @commands.check(check.acl)
     @karma_.command(name="givingboard")
@@ -589,7 +589,7 @@ class Karma(commands.Cog):
             return
 
         scrollable = utils.ScrollableEmbed(ctx, embeds)
-        await scrollable.scroll(ctx)
+        await scrollable.scroll()
 
     @commands.check(check.acl)
     @karma_.command(name="takingboard")
@@ -608,7 +608,7 @@ class Karma(commands.Cog):
             return
 
         scrollable = utils.ScrollableEmbed(ctx, embeds)
-        await scrollable.scroll(ctx)
+        await scrollable.scroll()
 
     @commands.check(check.acl)
     @karma_.group(name="ignore")

@@ -191,7 +191,7 @@ class Karma(commands.Cog):
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
-                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                await ctx.reply(_(ctx, "Emoji {emoji} not found.").format(emoji=emoji))
                 return
 
             karma_emoji = DiscordEmoji.get(ctx.guild.id, emoji.id)
@@ -229,14 +229,22 @@ class Karma(commands.Cog):
         emojis_neutral = [e for e in emojis if e.value == 0]
         emojis_negative = [e for e in emojis if e.value < 0]
 
+        missing_emojis: int = 0
+
         def format_emojis(emojis) -> List[str]:
+            nonlocal missing_emojis
+
             emoji_lists = []
             for i, emoji in enumerate(emojis):
                 if type(emoji) == UnicodeEmoji:
                     emoji_str = emoji.emoji
                 elif type(emoji) == DiscordEmoji:
+                    guild_emoji = self.bot.get_emoji(emoji.emoji_id)
+                    if guild_emoji is None:
+                        DiscordEmoji.remove(ctx.guild.id, emoji.emoji_id)
+                        missing_emojis += 1
+                        continue
                     emoji_str = str(self.bot.get_emoji(emoji.emoji_id))
-
                 emoji_lists.append(emoji_str)
 
             lines = [emoji_lists[i : i + 8] for i in range(0, len(emoji_lists), 8)]
@@ -262,6 +270,17 @@ class Karma(commands.Cog):
             for line in format_emojis(emojis_negative):
                 if line:
                     await ctx.send(line)
+
+        if missing_emojis:
+            await guild_log.info(
+                ctx.author,
+                ctx.channel,
+                (
+                    f"{missing_emojis} emojis were not found when "
+                    "karma emojis were displayed. They have "
+                    "been removed from the database."
+                ),
+            )
 
     @commands.check(check.acl)
     @karma_.command(name="vote")
@@ -289,7 +308,7 @@ class Karma(commands.Cog):
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
-                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                await ctx.reply(_(ctx, "Emoji {emoji} not found.").format(emoji=emoji))
                 return
             emoji = found_emoji
 
@@ -385,7 +404,7 @@ class Karma(commands.Cog):
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
-                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                await ctx.reply(_(ctx, "Emoji {emoji} not found.").format(emoji=emoji))
                 return
             DiscordEmoji.remove(ctx.guild.id, found_emoji.id)
             emoji_name = found_emoji.name
@@ -396,7 +415,7 @@ class Karma(commands.Cog):
         await guild_log.info(
             ctx.author, ctx.channel, f"Karma value of '{emoji_name}' unset."
         )
-        await ctx.reply(_(ctx, "The value has been unset."))
+        await ctx.reply(_(ctx, "Emoji's karma value has been unset."))
 
     @commands.check(check.acl)
     @karma_.command(name="set")
@@ -414,7 +433,7 @@ class Karma(commands.Cog):
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
-                await ctx.reply(_(ctx, "Emoji {emoji} not found!").format(emoji=emoji))
+                await ctx.reply(_(ctx, "Emoji {emoji} not found.").format(emoji=emoji))
                 return
             DiscordEmoji.add(ctx.guild.id, found_emoji.id, value)
             emoji_name = found_emoji.name

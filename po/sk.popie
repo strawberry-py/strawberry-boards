@@ -13,9 +13,6 @@ msgstr Bodový rebríček
 msgid Score, descending
 msgstr Skóre, zostupne
 
-msgid No stats found.
-msgstr Žiadne štatistiky sa nenašli.
-
 msgid Unknown
 msgstr Neznámy
 
@@ -36,6 +33,9 @@ msgstr Rozdaná karma
 
 msgid Karma taken
 msgstr Odobraná karma
+
+msgid Emoji {emoji} not found.
+msgstr Emoji {emoji} sa nenašlo.
 
 msgid This emoji does not have karma value.
 msgstr Tento emoji nie je ohodnotený.
@@ -75,6 +75,9 @@ msgstr Hlasovanie o hodnote {emoji} bolo neúspešné.
 
 msgid Karma value of {emoji} is **{value}**.
 msgstr Hodnota emoji {emoji} je **{value}**.
+
+msgid Emoji's karma value has been unset.
+msgstr Karma hodnota emoji bola resetovaná.
 
 msgid Usual values are only 1, 0 or -1.
 msgstr Používané hodnoty sú len 1, 0 alebo -1.
@@ -153,6 +156,3 @@ msgstr Odteraz sa karma v kanáli {channel} prestane ignorovať.
 
 msgid Worst {limit}
 msgstr Najhorší limit je {limit}
-
-msgid Unknown member
-msgstr Neznámy člen

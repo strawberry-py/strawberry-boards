@@ -13,9 +13,6 @@ msgstr Body (nejvyšší)
 msgid Score, descending
 msgstr Skóre, sestupně
 
-msgid No stats found.
-msgstr Žádná data nebyla nalezena.
-
 msgid Unknown
 msgstr Neznámý
 
@@ -36,6 +33,9 @@ msgstr Rozdaná karma
 
 msgid Karma taken
 msgstr Sebraná karma
+
+msgid Emoji {emoji} not found.
+msgstr Emoji {emoji} nebyl nalezen.
 
 msgid This emoji does not have karma value.
 msgstr Tento emoji nemá karma hodnotu.
@@ -75,6 +75,9 @@ msgstr Hlasování o hodnotě {emoji} se nezdařilo.
 
 msgid Karma value of {emoji} is **{value}**.
 msgstr Karma hodnota {emoji} je **{value}**.
+
+msgid Emoji's karma value has been unset.
+msgstr Karma hodnota emoji byla resetována.
 
 msgid Usual values are only 1, 0 or -1.
 msgstr Obvyklé hodnoty jsou pouze 1, 0 nebo -1.
@@ -153,6 +156,3 @@ msgstr Karma už v #{channel} ignorována nebude.
 
 msgid Worst {limit}
 msgstr Nejhorších {limit}
-
-msgid Unknown member
-msgstr Neznámý uživatel

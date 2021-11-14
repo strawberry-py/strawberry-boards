@@ -16,6 +16,7 @@ from sqlalchemy import (
     DateTime,
 )
 from sqlalchemy.orm import Query
+from sqlalchemy.orm.attributes import flag_modified
 
 import discord
 
@@ -28,60 +29,60 @@ class UserChannelConfig(database.base):
     Attributes:
         guild_id: ID of the guild.
         ignored_channels: IDs of channels that are ignored when ranking.
-        ignored_users: IDs of users that are ignored when ranking.
+        ignored_members: IDs of users that are ignored when ranking.
     """
 
-    __tablename__ = "user_channel_config"
+    __tablename__ = "user_channels_config"
 
     guild_id = Column(BigInteger, primary_key=True, autoincrement=False)
     ignored_channels = Column(ARRAY(BigInteger))
-    ignored_users = Column(ARRAY(BigInteger))
+    ignored_members = Column(ARRAY(BigInteger))
 
     @staticmethod
     def add(
-        guild_id: int,
-        ignored_channels: Union[int, List[int]] = None,
-        ignored_users: Union[int, List[int]] = None,
+        guild: discord.Guild,
+        ignored_channels: List[discord.TextChannel] = None,
+        ignored_members: List[discord.Member] = None,
     ) -> UserChannelConfig:
         """Updates the Guild Config item. Creates if not already present
 
         Args:
-            guild_id: ID of the guild.
-            ignored_channels: ID or list of IDs of the channel(s) to ignore. Defaults to None.
-            ignored_users: ID or list of IDs of the users(s) to ignore. Defaults to None.
+            guild: Guild object.
+            ignored_chasnnels: List of TextChannels to ignore. Defaults to None.
+            ignored_members: List of Members to ignore. Defaults to None.
 
         Returns:
             Added/Updated config object
         """
-        if ignored_channels is None and ignored_users is None:
+        if ignored_channels == [] and ignored_members == []:
             return
         query = (
-            session.query(UserChannelConfig).filter_by(guild_id=guild_id).one_or_none()
+            session.query(UserChannelConfig).filter_by(guild_id=guild.id).one_or_none()
         )
 
         if query is not None:
-            if ignored_channels is not None:
-                if isinstance(ignored_channels, int):
-                    query.ignored_channels.append(ignored_channels)
-                else:
-                    query.ignored_channels.extend(ignored_channels)
-            if ignored_users is not None:
-                if isinstance(ignored_users, int):
-                    query.ignored_users.append(ignored_users)
-                else:
-                    query.ignored_users.extend(ignored_users)
+            if ignored_channels != []:
+                query.ignored_channels.extend(
+                    [channel.id for channel in ignored_channels]
+                )
+                flag_modified(query, "ignored_channels")
+            if ignored_members != []:
+                query.ignored_members.extend([user.id for user in ignored_members])
+                flag_modified(query, "ignored_members")
         else:
             query = UserChannelConfig(
-                guild_id=guild_id,
-                ignored_channels=ignored_channels,
-                ignored_users=ignored_users,
+                guild_id=guild.id,
+                ignored_channels=[channel.id for channel in ignored_channels],
+                ignored_members=[user.id for user in ignored_members],
             )
             session.add(query)
+        print(query)
         session.commit()
+        print(query)
         return query
 
     @staticmethod
-    def get(guild_id: int) -> Optional[UserChannelConfig]:
+    def get(guild: discord.Guild) -> Optional[UserChannelConfig]:
         """Retreives the guild configuration
 
         Args:
@@ -90,9 +91,32 @@ class UserChannelConfig(database.base):
         Returns:
             Config object (if found)
         """
-        return (
-            session.query(UserChannelConfig).filter_by(guild_id=guild_id).one_or_none()
+        query = (
+            session.query(UserChannelConfig).filter_by(guild_id=guild.id).one_or_none()
         )
+        return query
+
+    def save(self):
+        """Commits the UserChannelConfig to the database."""
+        session.commit()
+
+    def __repr__(self):
+        return (
+            f'<UserChannelConfig guild_id="{self.guild_id}" '
+            f'ignored_channels="{self.ignored_channels}" ignored_members="{self.ignored_members}">'
+        )
+
+    def dump(self) -> Dict:
+        """Dumps UserChannel into a dictionary.
+
+        Returns:
+            The UnverifyItem as a dictionary.
+        """
+        return {
+            "guild_id": self.guild_id,
+            "ignored_channels": self.ignored_channels,
+            "ignored_members": self.ignored_members,
+        }
 
 
 class UserChannel(database.base):
@@ -139,7 +163,7 @@ class UserChannel(database.base):
         user_id = message.author.id
         user_name = message.author.display_name
         is_webhook = True if message.webhook_id else False
-        last_msg_at = message.created_at
+        last_msg_at = message.created_at.replace(tzinfo=None)
 
         user_channel = (
             session.query(UserChannel)
@@ -170,6 +194,112 @@ class UserChannel(database.base):
                 user_channel.count = user_channel.count - 1
             if user_channel.last_msg_at < last_msg_at:
                 user_channel.last_msg_at = last_msg_at
+            if user_channel.guild_name != guild_name:
+                user_channel.guild_name = guild_name
+            if user_channel.channel_name != channel_name:
+                user_channel.channel_name = channel_name
+            if user_channel.user_name != user_name:
+                user_channel.user_name = user_name
+
+        UserChannel._update_names(user_channel)
+        session.commit()
+
+        return user_channel
+
+    @staticmethod
+    def bulk_increment(item: Dict) -> UserChannel:
+        """Increment user_channel count in bulk, if it doesn't exist, create it
+
+        Args:
+            message: The message object to increment from
+            positive: Whether we add or subtract
+        """
+        if item["webhook_id"]:
+            is_webhook = True
+        else:
+            is_webhook = False
+        user_channel = (
+            session.query(UserChannel)
+            .filter_by(
+                guild_id=item["guild_id"],
+                channel_id=item["channel_id"],
+                user_id=item["user_id"],
+            )
+            .one_or_none()
+        )
+        if user_channel is None:
+            user_channel = UserChannel(
+                guild_id=item["guild_id"],
+                guild_name=item["guild_name"],
+                channel_id=item["channel_id"],
+                channel_name=item["channel_name"],
+                user_id=item["user_id"],
+                user_name=item["user_name"],
+                is_webhook=is_webhook,
+                count=item["count"],
+                last_msg_at=item["last_msg_at"].replace(tzinfo=None),
+            )
+            session.add(user_channel)
+        else:
+            user_channel.count = user_channel.count + item["count"]
+            if user_channel.last_msg_at < item["last_msg_at"].replace(tzinfo=None):
+                user_channel.last_msg_at = item["last_msg_at"].replace(tzinfo=None)
+            if user_channel.guild_name != item["guild_name"]:
+                user_channel.guild_name = item["guild_name"]
+            if user_channel.channel_name != item["channel_name"]:
+                user_channel.channel_name = item["channel_name"]
+            if user_channel.user_name != item["user_name"]:
+                user_channel.user_name = item["user_name"]
+
+        UserChannel._update_names(user_channel)
+        session.commit()
+
+        return user_channel
+
+    @staticmethod
+    def bulk_decrement(item: Dict) -> UserChannel:
+        """Increment user_channel count in bulk, if it doesn't exist, create it
+
+        Args:
+            message: The message object to increment from
+            positive: Whether we add or subtract
+        """
+        if item["webhook_id"]:
+            is_webhook = True
+        else:
+            is_webhook = False
+        user_channel = (
+            session.query(UserChannel)
+            .filter_by(
+                guild_id=item["guild_id"],
+                channel_id=item["channel_id"],
+                user_id=item["user_id"],
+            )
+            .one_or_none()
+        )
+        if user_channel is None:
+            user_channel = UserChannel(
+                guild_id=item["guild_id"],
+                guild_name=item["guild_name"],
+                channel_id=item["channel_id"],
+                channel_name=item["channel_name"],
+                user_id=item["user_id"],
+                user_name=item["user_name"],
+                is_webhook=is_webhook,
+                count=-item["count"],
+                last_msg_at=item["last_msg_at"].replace(tzinfo=None),
+            )
+            session.add(user_channel)
+        else:
+            user_channel.count = user_channel.count - item["count"]
+            if user_channel.last_msg_at < item["last_msg_at"].replace(tzinfo=None):
+                user_channel.last_msg_at = item["last_msg_at"].replace(tzinfo=None)
+            if user_channel.guild_name != item["guild_name"]:
+                user_channel.guild_name = item["guild_name"]
+            if user_channel.channel_name != item["channel_name"]:
+                user_channel.channel_name = item["channel_name"]
+            if user_channel.user_name != item["user_name"]:
+                user_channel.user_name = item["user_name"]
 
         UserChannel._update_names(user_channel)
         session.commit()
@@ -237,14 +367,15 @@ class UserChannel(database.base):
         if channel is not None:
             query = query.filter_by(channel_id=channel.id)
         if member is not None:
-            query = query.filter_by(member_id=member.id)
+            query = query.filter_by(user_id=member.id)
         if not webhooks:
             query = query.filter_by(is_webhook=False)
         if not include_filtered:
-            config = UserChannelConfig.get(guild.id)
-            query = query.filter(
-                UserChannel.channel_id.not_in(config.ignored_channels)
-            ).filter(UserChannel.user_id.not_in(config.ignored_users))
+            config = UserChannelConfig.get(guild)
+            if config is not None:
+                query = query.filter(
+                    UserChannel.channel_id.not_in(config.ignored_channels)
+                ).filter(UserChannel.user_id.not_in(config.ignored_members))
 
         return query
 
@@ -268,7 +399,13 @@ class UserChannel(database.base):
         Returns:
             Resulting list
         """
-        query = UserChannel._filter(guild, channel, member, webhooks, include_filtered)
+        query = UserChannel._filter(
+            guild=guild,
+            channel=channel,
+            member=member,
+            webhooks=webhooks,
+            include_filtered=include_filtered,
+        )
         return query.all()
 
     @staticmethod
@@ -291,7 +428,13 @@ class UserChannel(database.base):
         Returns:
             Resulting item
         """
-        query = UserChannel._filter(guild, channel, member, webhooks, include_filtered)
+        query = UserChannel._filter(
+            guild=guild,
+            channel=channel,
+            member=member,
+            webhooks=webhooks,
+            include_filtered=include_filtered,
+        )
         return query.order_by(desc(UserChannel.last_msg_at)).first()
 
     @staticmethod
@@ -424,13 +567,13 @@ class UserChannel(database.base):
         query = UserChannel._get_user_query(
             guild=guild,
             channel=channel,
-            channel=channel,
+            member=member,
             webhooks=webhooks,
             include_filtered=include_filtered,
         )
         return query.all()
 
-    @classmethod
+    @staticmethod
     def get_channel_counts(
         guild: discord.Guild = None,
         channel: discord.TextChannel = None,
@@ -459,7 +602,7 @@ class UserChannel(database.base):
         )
         return query.all()
 
-    @classmethod
+    @staticmethod
     def get_user_ranked(
         guild: discord.Guild = None,
         channel: discord.TextChannel = None,
@@ -489,7 +632,7 @@ class UserChannel(database.base):
         result = query.one_or_none()
         return result
 
-    @classmethod
+    @staticmethod
     def get_channel_ranked(
         guild: discord.Guild = None,
         channel: discord.TextChannel = None,
@@ -519,10 +662,9 @@ class UserChannel(database.base):
         result = query.first()
         return result
 
-    @classmethod
+    @staticmethod
     def get_user_sum(
         guild: discord.Guild = None,
-        channel: discord.TextChannel = None,
         member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -539,9 +681,8 @@ class UserChannel(database.base):
         Returns:
             Number of items
         """
-        query = UserChannel._filter(
+        query = UserChannel._get_user_query(
             guild=guild,
-            channel=channel,
             member=member,
             webhooks=webhooks,
             include_filtered=include_filtered,
@@ -549,11 +690,10 @@ class UserChannel(database.base):
         result = query.count()
         return result
 
-    @classmethod
+    @staticmethod
     def get_channel_sum(
         guild: discord.Guild = None,
         channel: discord.TextChannel = None,
-        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> int:
@@ -569,10 +709,9 @@ class UserChannel(database.base):
         Returns:
             Number of items
         """
-        query = UserChannel._filter(
+        query = UserChannel._get_channel_query(
             guild=guild,
             channel=channel,
-            member=member,
             webhooks=webhooks,
             include_filtered=include_filtered,
         )

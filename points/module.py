@@ -120,13 +120,13 @@ class Points(commands.Cog):
     ) -> str:
         result = []
         template = "`{points:>8}` … {name}"
-        tc = TranslationContext(guild.id, author.id)
+        utx = TranslationContext(guild.id, author.id)
         for db_user in users:
             user = guild.get_member(db_user.user_id)
             if user and user.display_name:
                 name = utils.Text.sanitise(user.display_name, limit=1900)
             else:
-                name = _(tc, "Unknown")
+                name = _(utx, "Unknown")
 
             if db_user.user_id == author.id:
                 name = "**" + name + "**"

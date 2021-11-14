@@ -71,6 +71,20 @@ class Karma(commands.Cog):
             reaction.channel_id,
             reaction.message_id,
         )
+        timeout = 0
+
+        while message is None:
+            if timeout >= 3:
+                raise discord.NotFound
+            message = await utils.Discord.get_message(
+                self.bot,
+                reaction.guild_id,
+                reaction.channel_id,
+                reaction.message_id,
+            )
+            timeout += 1
+            asyncio.sleep(5)
+
         if message.author.id == reaction.user_id:
             return
 
@@ -106,9 +120,18 @@ class Karma(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, reaction: discord.RawReactionActionEvent):
         """Handle added reactions."""
-        check_result = await self.karma_cache_check(reaction)
+        try:
+            check_result = await self.karma_cache_check(reaction)
+        except discord.NotFound:
+            await guild_log.debug(
+                reaction.user_id,
+                reaction.channel_id,
+                f"Message {reaction.message_id} not found on karma reaction add.",
+            )
+
         if not check_result:
             return
+
         author_m, author_r, emoji_value = check_result
 
         self.value_cache.setdefault(author_m, 0)
@@ -124,7 +147,14 @@ class Karma(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, reaction: discord.RawReactionActionEvent):
         """Handle removed reactions."""
-        check_result = await self.karma_cache_check(reaction)
+        try:
+            check_result = await self.karma_cache_check(reaction)
+        except discord.NotFound:
+            await guild_log.debug(
+                reaction.user_id,
+                reaction.channel_id,
+                f"Message {reaction.message_id} not found on karma reaction remove.",
+            )
         if not check_result:
             return
         author_m, author_r, emoji_value = check_result
@@ -183,7 +213,7 @@ class Karma(commands.Cog):
     @karma_.command(name="emoji")
     async def karma_emoji(self, ctx, emoji: Union[discord.PartialEmoji, str]):
         """Display karma information on emoji."""
-        if type(emoji) is discord.PartialEmoji:
+        if isinstance(emoji, discord.PartialEmoji):
             karma_emoji = DiscordEmoji.get(ctx.guild.id, emoji.id)
             emoji_url = emoji.url
         elif re.match(EMOJI_REGEX, emoji):
@@ -245,11 +275,11 @@ class Karma(commands.Cog):
 
             emoji_list = []
             for i, emoji in enumerate(emojis):
-                if type(emoji) == UnicodeEmoji:
+                if isinstance(emoji, UnicodeEmoji):
                     emoji_str = emoji.emoji
-                if type(emoji) == DiscordEmoji:
+                if isinstance(emoji, DiscordEmoji):
                     emoji = emoji.emoji_id
-                if type(emoji) == int:
+                if isinstance(emoji, int):
                     guild_emoji: Optional[discord.Emoji] = self.bot.get_emoji(emoji)
                     if guild_emoji is None:
                         DiscordEmoji.remove(ctx.guild.id, emoji)
@@ -319,7 +349,13 @@ class Karma(commands.Cog):
             )
             return
 
-        if type(emoji) == str and re.match(EMOJI_REGEX, emoji):
+        if emoji is not None and isinstance(emoji, discord.PartialEmoji):
+            emoji = next((x for x in ctx.guild.emojis if x.id == emoji.id), None)
+            if emoji is None:
+                await ctx.author.send(_(ctx, "That emoji is not from this server."))
+                return
+
+        if isinstance(emoji, str) and re.match(EMOJI_REGEX, emoji):
             found_emoji = discord.utils.get(
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
@@ -352,7 +388,7 @@ class Karma(commands.Cog):
 
         # Set the value to zero, so we can run this command multiple times
         # without starting a vote over the same emoji over and over.
-        if type(emoji) is discord.PartialEmoji:
+        if isinstance(emoji, discord.Emoji):
             DiscordEmoji.add(ctx.guild.id, emoji.id, 0)
 
         await guild_log.info(
@@ -393,9 +429,9 @@ class Karma(commands.Cog):
             await ctx.send(_(ctx, "Vote over {emoji} failed.").format(emoji=str(emoji)))
             return
 
-        if type(emoji) is discord.Emoji:
+        if isinstance(emoji, discord.Emoji):
             DiscordEmoji.add(ctx.guild.id, emoji.id, result)
-        elif type(emoji) is str:
+        if isinstance(emoji, str):
             UnicodeEmoji.add(ctx.guild.id, emoji, result)
 
         await guild_log.info(
@@ -412,7 +448,7 @@ class Karma(commands.Cog):
     async def karma_unset(self, ctx, emoji: Union[discord.PartialEmoji, str]):
         """Set emoji's karma value."""
         emoji_name: str
-        if type(emoji) is discord.PartialEmoji:
+        if isinstance(emoji, discord.PartialEmoji):
             DiscordEmoji.remove(ctx.guild.id, emoji.id)
             emoji_name = emoji.name
         elif re.match(EMOJI_REGEX, emoji):
@@ -441,7 +477,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "Usual values are only 1, 0 or -1."))
 
         emoji_name: str
-        if type(emoji) is discord.PartialEmoji:
+        if isinstance(emoji, discord.PartialEmoji):
             DiscordEmoji.add(ctx.guild.id, emoji.id, value)
             emoji_name = emoji.name
         elif re.match(EMOJI_REGEX, emoji):

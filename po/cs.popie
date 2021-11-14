@@ -40,6 +40,9 @@ msgstr Emoji bez karma hodnoty
 msgid All server emojis have been assigned a karma value.
 msgstr Všechny server emoji mají karma hodnotu.
 
+msgid That emoji is not from this server.
+msgstr Tento emoji není z tohoto serveru.
+
 msgid Karma vote over the value of {emoji} started.
 msgstr Hlasování o karma hodnotě {emoji} začalo.
 

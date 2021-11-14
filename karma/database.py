@@ -176,6 +176,7 @@ class DiscordEmoji(database.base):
             .filter_by(guild_id=guild_id, emoji_id=emoji_id)
             .delete()
         )
+        session.commit()
         return query
 
     def __repr__(self) -> str:

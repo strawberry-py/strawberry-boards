@@ -34,6 +34,9 @@ msgstr Emoji s neutrální karmou
 msgid Emojis with negative karma
 msgstr Emoji s negativní karmou
 
+msgid Emojis with no karma value
+msgstr Emoji bez karma hodnoty
+
 msgid All server emojis have been assigned a karma value.
 msgstr Všechny server emoji mají karma hodnotu.
 

@@ -1,7 +1,7 @@
 import asyncio
 import math
 import re
-from typing import Optional, List, Tuple, Union
+from typing import Optional, List, Tuple, Union, Set
 
 from emoji import UNICODE_EMOJI as _UNICODE_EMOJI
 
@@ -229,25 +229,36 @@ class Karma(commands.Cog):
         emojis_neutral = [e for e in emojis if e.value == 0]
         emojis_negative = [e for e in emojis if e.value < 0]
 
+        not_voted_emoji_ids: List[int] = []
+        db_ids: Set[str] = set([e.emoji_id for e in DiscordEmoji.get_all(ctx.guild.id)])
+        for emoji in ctx.guild.emojis:
+            if emoji.id not in db_ids:
+                not_voted_emoji_ids.append(emoji.id)
+
         missing_emojis: int = 0
 
-        def format_emojis(emojis) -> List[str]:
+        def format_emojis(
+            emojis: List[Union[UnicodeEmoji, DiscordEmoji, int]]
+        ) -> List[str]:
+            """Format a list of emojis or emoji IDs."""
             nonlocal missing_emojis
 
-            emoji_lists = []
+            emoji_list = []
             for i, emoji in enumerate(emojis):
                 if type(emoji) == UnicodeEmoji:
                     emoji_str = emoji.emoji
-                elif type(emoji) == DiscordEmoji:
-                    guild_emoji = self.bot.get_emoji(emoji.emoji_id)
+                if type(emoji) == DiscordEmoji:
+                    emoji = emoji.emoji_id
+                if type(emoji) == int:
+                    guild_emoji: Optional[discord.Emoji] = self.bot.get_emoji(emoji)
                     if guild_emoji is None:
-                        DiscordEmoji.remove(ctx.guild.id, emoji.emoji_id)
+                        DiscordEmoji.remove(ctx.guild.id, emoji)
                         missing_emojis += 1
                         continue
-                    emoji_str = str(self.bot.get_emoji(emoji.emoji_id))
-                emoji_lists.append(emoji_str)
+                    emoji_str = str(guild_emoji)
+                emoji_list.append(emoji_str)
 
-            lines = [emoji_lists[i : i + 8] for i in range(0, len(emoji_lists), 8)]
+            lines = [emoji_list[i : i + 8] for i in range(0, len(emoji_list), 8)]
             lines = [" ".join(line) for line in lines]
 
             messages = [lines[i : i + 3] for i in range(0, len(lines), 3)]
@@ -268,6 +279,11 @@ class Karma(commands.Cog):
         if len(emojis_negative):
             await ctx.send(_(ctx, "Emojis with negative karma"))
             for line in format_emojis(emojis_negative):
+                if line:
+                    await ctx.send(line)
+        if len(not_voted_emoji_ids):
+            await ctx.send(_(ctx, "Emojis with no karma value"))
+            for line in format_emojis(not_voted_emoji_ids):
                 if line:
                     await ctx.send(line)
 

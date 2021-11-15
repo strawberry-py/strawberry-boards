@@ -56,6 +56,9 @@ class Karma(commands.Cog):
             self.karma_cache_save()
 
     async def karma_cache_check(self, reaction: discord.RawReactionActionEvent):
+        if IgnoredChannel.get(reaction.guild_id, reaction.channel_id):
+            return
+
         if reaction.emoji.is_custom_emoji():
             emoji = DiscordEmoji.get(reaction.guild_id, reaction.emoji.id)
         else:

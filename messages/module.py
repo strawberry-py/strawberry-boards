@@ -197,7 +197,7 @@ class Messages(commands.Cog):
             ctx.channel,
             _(
                 gtx,
-                "Messageboards config changed. Added:\nignored_channels: {channels}\nignored_members: {members}",
+                "Messageboards config changed. Added: ignored_channels: {channels} ignored_members: {members}",
             ).format(channels=channels, members=members),
         )
         await self.messages_config_get(ctx)
@@ -271,7 +271,7 @@ class Messages(commands.Cog):
             ctx.channel,
             _(
                 gtx,
-                "Messageboards config changed. Removed:\nignored_channels: {channels}\nignored_members: {members}",
+                "Messageboards config changed. Removed: ignored_channels: {channels} ignored_members: {members}",
             ).format(channels=channels, members=members),
         )
         await self.messages_config_get(ctx)
@@ -378,8 +378,8 @@ class Messages(commands.Cog):
         embeds += self._create_user_embeds(
             ctx=ctx,
             user_counts=user_counts,
-            title=_(ctx, "Channel info"),
-            description=_(ctx, "Message count per user"),
+            title=_(ctx, "Channel information"),
+            description=_(ctx, "Total count of messages by users"),
         )
         scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll()
@@ -411,7 +411,7 @@ class Messages(commands.Cog):
             ctx=ctx,
             user_counts=user_counts,
             title=_(ctx, "User board"),
-            description=_(ctx, "Total count of messages in channels"),
+            description=_(ctx, "Total count of messages by users"),
         )
         scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll()
@@ -523,7 +523,7 @@ class Messages(commands.Cog):
         embeds += self._create_channel_embeds(
             ctx=ctx,
             channel_counts=channel_counts,
-            title=_(ctx, "Channelboard"),
+            title=_(ctx, "Channel board"),
             description=_(ctx, "Total count of messages in channels"),
         )
         scrollable = utils.ScrollableEmbed(ctx, embeds)

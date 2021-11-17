@@ -157,6 +157,90 @@ msgstr Tvoje skóre
 msgid Unknown member
 msgstr Neznámý uživatel
 
+msgid Messageboard config was not found for this guild.
+msgstr Messageboard konfigurace nebyla pro tento server nalezena.
+
+msgid Messageboard config
+msgstr Messageboard konfigurace
+
+msgid Guild
+msgstr Server
+
+msgid Ignored channels
+msgstr Ignorované kanály
+
+msgid Ignored members
+msgstr Ignorovaní uživatelé
+
+msgid Messageboards config changed. Added: ignored_channels: {channels} ignored_members: {members}
+msgstr Messageboard konfigurace se změnila. Přidané: ignorovane_kanaly: {channels} ignorovani_uzivatele: {members}
+
+msgid Messageboards config was reset.
+msgstr Messageboard konfigurace byla vyresetovaná.
+
+msgid Messageboards config changed. Removed: ignored_channels: {channels} ignored_members: {members}
+msgstr Messageboard konfigurace se změnila. Odebrané: ignorovane_kanaly: {channels} ignorovani_uzivatele: {members}
+
+msgid I couldn't find any results in the database.
+msgstr V databázi nemám žádné výsledky
+
+msgid Channel board
+msgstr Kanálová tabule
+
+msgid Total count of messages in channels
+msgstr Celkový počet zpráv v kanálech
+
+msgid Channel information
+msgstr Informace o kanálu
+
+msgid Name
+msgstr Jméno
+
+msgid ID
+msgstr ID
+
+msgid Category
+msgstr Kategorie
+
+msgid Last message
+msgstr Poslední zpráva
+
+msgid Total message count
+msgstr Celkový počet zpráv
+
+msgid Channel rank
+msgstr Pozice kanálu
+
+msgid Total count of messages by users
+msgstr Celkový počet zpráv od uživatelů
+
+msgid User board
+msgstr Uživatelská tabule
+
+msgid User information
+msgstr Informace o uživateli
+
+msgid Status
+msgstr Status
+
+msgid Joined discord
+msgstr Registrován
+
+msgid Joined guild
+msgstr Přidán na server
+
+msgid User rank
+msgstr Pozice uživatele
+
+msgid Roles
+msgstr Role
+
+msgid Top {offset}
+msgstr Top {offset}
+
+msgid Your position
+msgstr Tvoje pozice
+
 msgid Points
 msgstr Body
 

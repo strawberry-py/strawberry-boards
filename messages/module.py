@@ -5,9 +5,9 @@ import pandas as pd
 
 from typing import List
 
-import discord
-from discord.ext.commands.bot import Bot
-from discord.ext import tasks, commands
+import nextcord
+from nextcord.ext.commands.bot import Bot
+from nextcord.ext import tasks, commands
 
 import database.config
 from core import check, i18n, logger, utils
@@ -176,8 +176,8 @@ class Messages(commands.Cog):
     async def messages_config_ignore(
         self,
         ctx: commands.Context,
-        channels: commands.Greedy[discord.TextChannel],
-        members: commands.Greedy[discord.Member],
+        channels: commands.Greedy[nextcord.TextChannel],
+        members: commands.Greedy[nextcord.Member],
     ):
         """Set channels or members as ignored so they won't be shown in the boards.
 
@@ -233,8 +233,8 @@ class Messages(commands.Cog):
     async def messages_config_remove(
         self,
         ctx: commands.Context,
-        channels: commands.Greedy[discord.TextChannel],
-        members: commands.Greedy[discord.Member],
+        channels: commands.Greedy[nextcord.TextChannel],
+        members: commands.Greedy[nextcord.Member],
     ):
         """Remove members or channels from ignored list.
 
@@ -312,7 +312,7 @@ class Messages(commands.Cog):
     @commands.check(check.acl)
     @channel_.command(name="info")
     async def channel_info(
-        self, ctx: commands.Context, channel: discord.TextChannel = None
+        self, ctx: commands.Context, channel: nextcord.TextChannel = None
     ):
         """Channel information with user leaderboard for the channel
 
@@ -419,7 +419,7 @@ class Messages(commands.Cog):
     @commands.guild_only()
     @commands.check(check.acl)
     @user_.command(name="info")
-    async def user_info(self, ctx: commands.Context, member: discord.Member = None):
+    async def user_info(self, ctx: commands.Context, member: nextcord.Member = None):
         """User information with channel leaderboard for the user
 
         Args:
@@ -464,7 +464,7 @@ class Messages(commands.Cog):
         )
         joined_dc = joined_dc.strftime("%d.%m.%Y\n%H:%M:%S")
 
-        if member.colour != discord.Colour.default():
+        if member.colour != nextcord.Colour.default():
             embed = utils.Discord.create_embed(
                 author=ctx.message.author,
                 title=_(ctx, "User information"),
@@ -538,7 +538,7 @@ class Messages(commands.Cog):
         title: str,
         description: str,
         item_count: int = 10,
-    ) -> List[discord.Embed]:
+    ) -> List[nextcord.Embed]:
         """Creates the embed pages for channel boards
 
         Args:
@@ -551,7 +551,7 @@ class Messages(commands.Cog):
         Returns:
             List of embeds
         """
-        pages: List[discord.Embed] = []
+        pages: List[nextcord.Embed] = []
         chunks = [
             channel_counts[i : i + item_count]
             for i in range(0, len(channel_counts), item_count)
@@ -588,7 +588,7 @@ class Messages(commands.Cog):
         title: str,
         description: str,
         item_count: int = 10,
-    ) -> List[discord.Embed]:
+    ) -> List[nextcord.Embed]:
         """Creates the embed pages for user boards
 
         Args:
@@ -601,7 +601,7 @@ class Messages(commands.Cog):
         Returns:
             List of embeds
         """
-        pages: List[discord.Embed] = []
+        pages: List[nextcord.Embed] = []
         chunks = [
             user_counts[i : i + item_count]
             for i in range(0, len(user_counts), item_count)
@@ -652,9 +652,9 @@ class Messages(commands.Cog):
     # LISTENERS
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: nextcord.Message):
         """Adds message to positive_cache if it came from a guild channel"""
-        if isinstance(message.channel, discord.TextChannel):
+        if isinstance(message.channel, nextcord.TextChannel):
             self.positive_cache = self.positive_cache.append(
                 {
                     "guild_id": message.guild.id,
@@ -668,13 +668,28 @@ class Messages(commands.Cog):
                 },
                 ignore_index=True,
             )
-        if isinstance(message.channel, discord.Thread):
-            print(message)  # TODO: fix when we switch to nextcord
+        if (
+            isinstance(message.channel, nextcord.Thread)
+            and not message.type == nextcord.MessageType.thread_starter_message
+        ):
+            self.positive_cache = self.positive_cache.append(
+                {
+                    "guild_id": message.guild.id,
+                    "guild_name": message.guild.name,
+                    "channel_id": message.channel.id,
+                    "channel_name": f"{message.channel.parent.name}: 🧵{message.channel.name}",
+                    "user_id": message.author.id,
+                    "user_name": message.author.display_name,
+                    "webhook_id": message.webhook_id,
+                    "last_msg_at": message.created_at,
+                },
+                ignore_index=True,
+            )
 
     @commands.Cog.listener()
-    async def on_message_delete(self, message: discord.Message):
+    async def on_message_delete(self, message: nextcord.Message):
         """Adds message to negative_cache if it was deleted in a guild channel."""
-        if isinstance(message.channel, discord.TextChannel):
+        if isinstance(message.channel, nextcord.TextChannel):
             self.negative_cache = self.positive_cache.append(
                 {
                     "guild_id": message.guild.id,
@@ -688,18 +703,52 @@ class Messages(commands.Cog):
                 },
                 ignore_index=True,
             )
+        if (
+            isinstance(message.channel, nextcord.Thread)
+            and not message.type == nextcord.MessageType.thread_starter_message
+        ):
+            self.positive_cache = self.positive_cache.append(
+                {
+                    "guild_id": message.guild.id,
+                    "guild_name": message.guild.name,
+                    "channel_id": message.channel.id,
+                    "channel_name": f"{message.channel.parent.name}: 🧵{message.channel.name}",
+                    "user_id": message.author.id,
+                    "user_name": message.author.display_name,
+                    "webhook_id": message.webhook_id,
+                    "last_msg_at": message.created_at,
+                },
+                ignore_index=True,
+            )
 
     @commands.Cog.listener()
-    async def on_bulk_message_delete(self, messages: List[discord.Message]):
+    async def on_bulk_message_delete(self, messages: List[nextcord.Message]):
         """Adds messages to negative_cache if they were deleted in a guild channel."""
         for message in messages:
-            if isinstance(message.channel, discord.TextChannel):
+            if isinstance(message.channel, nextcord.TextChannel):
                 self.negative_cache = self.positive_cache.append(
                     {
                         "guild_id": message.guild.id,
                         "guild_name": message.guild.name,
                         "channel_id": message.channel.id,
                         "channel_name": message.channel.name,
+                        "user_id": message.author.id,
+                        "user_name": message.author.display_name,
+                        "webhook_id": message.webhook_id,
+                        "last_msg_at": message.created_at,
+                    },
+                    ignore_index=True,
+                )
+            if (
+                isinstance(message.channel, nextcord.Thread)
+                and not message.type == nextcord.MessageType.thread_starter_message
+            ):
+                self.positive_cache = self.positive_cache.append(
+                    {
+                        "guild_id": message.guild.id,
+                        "guild_name": message.guild.name,
+                        "channel_id": message.channel.id,
+                        "channel_name": f"{message.channel.parent.name}: 🧵{message.channel.name}",
                         "user_id": message.author.id,
                         "user_name": message.author.display_name,
                         "webhook_id": message.webhook_id,
@@ -717,14 +766,15 @@ class Messages(commands.Cog):
                 guild=guild, webhooks=True, include_filtered=True
             )
             guild_count = 0
-            for channel in guild.channels:
-                if isinstance(channel, discord.TextChannel):
+            channels_and_threads = guild.channels + guild.threads
+            for channel in channels_and_threads:
+                if isinstance(channel, (nextcord.TextChannel, nextcord.Thread)):
                     if channel_counts is None:
                         try:
                             msgs = await channel.history(
                                 limit=None, oldest_first=True
                             ).flatten()
-                        except discord.errors.Forbidden:
+                        except nextcord.errors.Forbidden:
                             await self.log(
                                 level="warning",
                                 message=f"Forbidden getting history for channel {channel} in guild {guild.name}",
@@ -743,7 +793,7 @@ class Messages(commands.Cog):
                                     ),
                                     oldest_first=True,
                                 ).flatten()
-                            except discord.errors.Forbidden:
+                            except nextcord.errors.Forbidden:
                                 await self.log(
                                     level="warning",
                                     message="Forbidden getting history for channel {channel} in guild {guild}".format(
@@ -755,7 +805,7 @@ class Messages(commands.Cog):
                                 msgs = await channel.history(
                                     limit=None, oldest_first=True
                                 ).flatten()
-                            except discord.errors.Forbidden:
+                            except nextcord.errors.Forbidden:
                                 await self.log(
                                     level="warning",
                                     message="Forbidden getting history for channel {channel} in guild {guild}".format(
@@ -764,19 +814,25 @@ class Messages(commands.Cog):
                                 )
 
                     if len(msgs) > 0:
+                        if isinstance(channel, nextcord.Thread):
+                            channel_name = f"{channel.parent.name}: 🧵{channel.name}"
+                        else:
+                            channel_name = channel.name
+
                         guild_count += len(msgs)
                         msgs_dicts = [
                             {
                                 "guild_id": x.guild.id,
                                 "guild_name": x.guild.name,
                                 "channel_id": x.channel.id,
-                                "channel_name": x.channel.name,
+                                "channel_name": channel_name,
                                 "user_id": x.author.id,
                                 "user_name": x.author.display_name,
                                 "webhook_id": x.webhook_id,
                                 "last_msg_at": x.created_at,
                             }
                             for x in msgs
+                            if not x.type == nextcord.MessageType.thread_starter_message
                         ]
                         self.positive_cache = self.positive_cache.append(
                             msgs_dicts, ignore_index=True, sort=False

@@ -52,8 +52,11 @@ msgstr Hlasovanie potrvá **{minutes}** minút.
 msgid Required minimum vote count is **{count}**.
 msgstr Potrebný počet hlasov je **{count}**.
 
-msgid Vote over {emoji} failed.
-msgstr Hlasovanie o hodnote {emoji} bolo neúspešné.
+msgid Vote over {emoji} failed (not enough votes).
+msgstr Hlasovanie o hodnote {emoji} bolo neúspešné (nedostatok hlasov).
+
+msgid Vote over {emoji} ended in a draw.
+msgstr Hlasovanie o hodnote {emoji} skončilo remízou.
 
 msgid Karma value of {emoji} is **{value}**.
 msgstr Hodnota emoji {emoji} je **{value}**.

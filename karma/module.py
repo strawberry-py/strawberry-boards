@@ -418,6 +418,19 @@ class Karma(commands.Cog):
             + "."
         )
 
+        if sum(votes.values()) < voter_limit:
+            await guild_log.info(
+                ctx.author,
+                ctx.channel,
+                log_message + " Not enough votes, aborted.",
+            )
+            await ctx.send(
+                _(ctx, "Vote over {emoji} failed (not enough votes).").format(
+                    emoji=str(emoji)
+                )
+            )
+            return
+
         result: Optional[int] = None
         if votes["🔼"] > votes["0⃣"] and votes["🔼"] > votes["🔽"]:
             result = 1
@@ -429,9 +442,11 @@ class Karma(commands.Cog):
             await guild_log.info(
                 ctx.author,
                 ctx.channel,
-                _(ctx, log_message + " Inconconclusive, aborted."),
+                log_message + " Inconclusive, aborted.",
             )
-            await ctx.send(_(ctx, "Vote over {emoji} failed.").format(emoji=str(emoji)))
+            await ctx.send(
+                _(ctx, "Vote over {emoji} ended in a draw.").format(emoji=str(emoji))
+            )
             return
 
         if isinstance(emoji, discord.Emoji):

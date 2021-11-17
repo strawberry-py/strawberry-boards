@@ -599,9 +599,13 @@ class Karma(commands.Cog):
     @commands.check(check.acl)
     @karma_.command(name="give")
     async def karma_give(
-        self, ctx, members: commands.Greedy[discord.Member], value: int
+        self, ctx, value: int, members: commands.Greedy[discord.Member]
     ):
         """Give some karma to multiple users."""
+        if not members:
+            await ctx.reply(_(ctx, "You have to specify at least one member."))
+            return
+
         for member in members:
             user = KarmaMember.get_or_add(ctx.guild.id, member.id)
             user.value += value
@@ -609,7 +613,7 @@ class Karma(commands.Cog):
 
         reply: str
         if len(members) == 1:
-            reply = _(ctx, "{member} got {value} karma points.").format(
+            reply = _(ctx, "Member {member} got {value} karma points.").format(
                 member=utils.Text.sanitise(member.name),
                 value=value,
             )

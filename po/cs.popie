@@ -94,8 +94,11 @@ msgstr Negativní reakce
 msgid Neutral reactions
 msgstr Neutrální reakce
 
-msgid {member} got {value} karma points.
-msgstr {member} dostal {value} karma bodů.
+msgid You have to specify at least one member.
+msgstr Musíš specifikovat alespoň jednoho uživatele.
+
+msgid Member {member} got {value} karma points.
+msgstr Uživatel {member} získal {value} karma bodů.
 
 msgid Every member got {value} karma points
 msgstr Každý z uživatelů dostal {value} karma bodů.

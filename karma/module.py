@@ -408,6 +408,8 @@ class Karma(commands.Cog):
         # Fetch updated message with the votes
         vote_message = await vote_message.channel.fetch_message(vote_message.id)
         for reaction in vote_message.reactions:
+            if str(reaction.emoji) not in votes.keys():
+                continue
             votes[reaction.emoji] = reaction.count - 1
 
         log_message: str = (

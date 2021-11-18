@@ -51,7 +51,7 @@ class Points(commands.Cog):
             author=ctx.author,
             title=_(ctx, "Points"),
             description=_(ctx, "**{user}'s** points").format(
-                user=utils.Text.sanitise(member.display_name)
+                user=utils.text.sanitise(member.display_name)
             ),
         )
         points = getattr(result, "points", 0)
@@ -124,7 +124,7 @@ class Points(commands.Cog):
         for db_user in users:
             user = guild.get_member(db_user.user_id)
             if user and user.display_name:
-                name = utils.Text.sanitise(user.display_name, limit=1900)
+                name = utils.text.sanitise(user.display_name, limit=1900)
             else:
                 name = _(utx, "Unknown")
 
@@ -176,7 +176,7 @@ class Points(commands.Cog):
                     name=_(ctx, "Your score"),
                     value="`{points:>8}` … {name}".format(
                         points=author.points,
-                        name="**" + utils.Text.sanitise(ctx.author.display_name) + "**",
+                        name="**" + utils.text.sanitise(ctx.author.display_name) + "**",
                     ),
                     inline=False,
                 )

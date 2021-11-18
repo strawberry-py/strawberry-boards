@@ -189,7 +189,7 @@ class Karma(commands.Cog):
         embed = utils.discord.create_embed(
             author=ctx.author,
             title=_(ctx, "User karma"),
-            description=utils.Text.sanitise(member.display_name),
+            description=utils.text.sanitise(member.display_name),
         )
 
         embed.add_field(
@@ -559,11 +559,13 @@ class Karma(commands.Cog):
             ).format(link=message.jump_url, value=message_karma),
         )
 
-        timestamp: str = utils.Time.datetime(utils.Time.id_to_datetime(message.id))
+        timestamp: str = utils.time.format_datetime(
+            utils.time.id_to_datetime(message.id)
+        )
         embed.add_field(
             name=timestamp,
             value=_(ctx, "**{user}** in #{channel}").format(
-                user=utils.Text.sanitise(message.author.display_name),
+                user=utils.text.sanitise(message.author.display_name),
                 channel=message.channel.name,
             ),
             inline=True,
@@ -615,7 +617,7 @@ class Karma(commands.Cog):
         reply: str
         if len(members) == 1:
             reply = _(ctx, "Member {member} got {value} karma points.").format(
-                member=utils.Text.sanitise(member.name),
+                member=utils.text.sanitise(member.name),
                 value=value,
             )
         else:
@@ -723,7 +725,7 @@ class Karma(commands.Cog):
 
         channels = [ctx.guild.get_channel(c.channel_id) for c in ignored_channels]
 
-        table_pages: List[str] = utils.Text.create_table(
+        table_pages: List[str] = utils.text.create_table(
             channels,
             {
                 "id": _(ctx, "Channel ID"),
@@ -846,7 +848,7 @@ class Karma(commands.Cog):
         for user in users:
             member = guild.get_member(user.user_id)
             if member and member.display_name:
-                name = utils.Text.sanitise(member.display_name, limit=32)
+                name = utils.text.sanitise(member.display_name, limit=32)
             else:
                 name = _(utx, "Unknown member")
 

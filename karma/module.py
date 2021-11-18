@@ -77,7 +77,7 @@ class Karma(commands.Cog):
 
         while message is None:
             if timeout >= 3:
-                raise nextcord.NotFound
+                return
             message = await utils.discord.get_message(
                 self.bot,
                 reaction.guild_id,
@@ -85,7 +85,7 @@ class Karma(commands.Cog):
                 reaction.message_id,
             )
             timeout += 1
-            asyncio.sleep(5)
+            await asyncio.sleep(5)
 
         if message.author.id == reaction.user_id:
             return

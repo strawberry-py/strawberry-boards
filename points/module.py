@@ -5,13 +5,13 @@ from typing import Union, Dict, List
 import nextcord
 from nextcord.ext import commands, tasks
 
-import database.config
-from core import utils, i18n, TranslationContext
+import pie.database.config
+from pie import utils, i18n
 
 from .database import UserStats, BoardOrder
 
 _ = i18n.Translator("modules/boards").translate
-config = database.config.Config.get()
+config = pie.database.config.Config.get()
 
 LIMITS_MESSAGE = [15, 25]
 LIMITS_REACTION = [0, 5]
@@ -37,7 +37,7 @@ class Points(commands.Cog):
     @commands.group(name="points")
     async def points(self, ctx):
         """Get information about user points"""
-        await utils.Discord.send_help(ctx)
+        await utils.discord.send_help(ctx)
 
     @points.command(name="get")
     async def points_get(self, ctx, member: nextcord.Member = None):
@@ -47,7 +47,7 @@ class Points(commands.Cog):
 
         result = UserStats.get_stats(ctx.guild.id, member.id)
 
-        embed = utils.Discord.create_embed(
+        embed = utils.discord.create_embed(
             author=ctx.author,
             title=_(ctx, "Points"),
             description=_(ctx, "**{user}'s** points").format(
@@ -65,7 +65,7 @@ class Points(commands.Cog):
             value=_(ctx, message),
         )
         await ctx.send(embed=embed)
-        await utils.Discord.delete_message(ctx.message)
+        await utils.discord.delete_message(ctx.message)
 
     @points.command(name="leaderboard", aliases=["best"])
     async def points_leaderboard(self, ctx):
@@ -82,7 +82,7 @@ class Points(commands.Cog):
             page_count=10,
         )
 
-        await utils.Discord.delete_message(ctx.message)
+        await utils.discord.delete_message(ctx.message)
 
         scrollable_embed = utils.ScrollableEmbed(ctx, embeds)
         await scrollable_embed.scroll()
@@ -120,7 +120,7 @@ class Points(commands.Cog):
     ) -> str:
         result = []
         template = "`{points:>8}` … {name}"
-        utx = TranslationContext(guild.id, author.id)
+        utx = i18n.TranslationContext(guild.id, author.id)
         for db_user in users:
             user = guild.get_member(db_user.user_id)
             if user and user.display_name:
@@ -157,7 +157,7 @@ class Points(commands.Cog):
             if not users:
                 break
 
-            page = utils.Discord.create_embed(
+            page = utils.discord.create_embed(
                 author=ctx.author,
                 title=title,
                 description=description,

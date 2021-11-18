@@ -9,9 +9,8 @@ import nextcord
 from nextcord.ext.commands.bot import Bot
 from nextcord.ext import tasks, commands
 
-import database.config
-from core import check, i18n, logger, utils
-from core import TranslationContext
+import pie.database.config
+from pie import check, i18n, logger, utils
 
 from .database import UserChannel, UserChannelConfig
 from sqlalchemy.orm.attributes import flag_modified
@@ -20,7 +19,7 @@ from sqlalchemy.orm.attributes import flag_modified
 _ = i18n.Translator("modules/boards").translate
 bot_log = logger.Bot.logger()
 guild_log = logger.Guild.logger()
-config = database.config.Config.get()
+config = pie.database.config.Config.get()
 
 df_columns = {
     "guild_id": pd.Series(dtype="Int64"),
@@ -112,14 +111,14 @@ class Messages(commands.Cog):
     @commands.group(name="messages")
     async def messages_(self, ctx: commands.Context):
         """Messageboards configuration"""
-        await utils.Discord.send_help(ctx)
+        await utils.discord.send_help(ctx)
 
     @commands.guild_only()
     @commands.check(check.acl)
     @messages_.group(name="config")
     async def messages_config_(self, ctx: commands.Context):
         """Messageboards configuration"""
-        await utils.Discord.send_help(ctx)
+        await utils.discord.send_help(ctx)
 
     @commands.guild_only()
     @commands.check(check.acl)
@@ -130,7 +129,7 @@ class Messages(commands.Cog):
         if config is None:
             await ctx.reply(_(ctx, "Messageboard config was not found for this guild."))
             return
-        embed = utils.Discord.create_embed(
+        embed = utils.discord.create_embed(
             author=ctx.message.author, title=_(ctx, "Messageboard config")
         )
 
@@ -186,12 +185,12 @@ class Messages(commands.Cog):
             members: Members to ignore
         """
         if channels == [] and members == []:
-            await utils.Discord.send_help(ctx)
+            await utils.discord.send_help(ctx)
             return
         UserChannelConfig.add(
             guild=ctx.guild, ignored_channels=channels, ignored_members=members
         )
-        gtx = TranslationContext(ctx.guild.id, None)
+        gtx = i18n.TranslationContext(ctx.guild.id, None)
         await guild_log.info(
             ctx.author,
             ctx.channel,
@@ -216,7 +215,7 @@ class Messages(commands.Cog):
             config.ignored_members = []
             config.save()
 
-        gtx = TranslationContext(ctx.guild.id, None)
+        gtx = i18n.TranslationContext(ctx.guild.id, None)
         await guild_log.info(
             ctx.author,
             ctx.channel,
@@ -243,7 +242,7 @@ class Messages(commands.Cog):
             members:  Members to stop ignoring
         """
         if members == [] and channels == []:
-            await utils.Discord.send_help(ctx)
+            await utils.discord.send_help(ctx)
             return
 
         config = UserChannelConfig.get(ctx.guild)
@@ -265,7 +264,7 @@ class Messages(commands.Cog):
                 flag_modified(config, "ignored_channels")
             config.save()
 
-        gtx = TranslationContext(ctx.guild.id, None)
+        gtx = i18n.TranslationContext(ctx.guild.id, None)
         await guild_log.info(
             ctx.author,
             ctx.channel,
@@ -281,7 +280,7 @@ class Messages(commands.Cog):
     @commands.group(name="channel")
     async def channel_(self, ctx: commands.Context):
         """Channel boards"""
-        await utils.Discord.send_help(ctx)
+        await utils.discord.send_help(ctx)
 
     @commands.guild_only()
     @commands.check(check.acl)
@@ -343,7 +342,7 @@ class Messages(commands.Cog):
         ).astimezone(tz=None)
         last_msg_at = last_msg_at.strftime("%d.%m.%Y %H:%M:%S")
 
-        embed = utils.Discord.create_embed(
+        embed = utils.discord.create_embed(
             author=ctx.message.author, title=_(ctx, "Channel information")
         )
         embed.add_field(name=_(ctx, "Name"), value=str(channel.name), inline=True)
@@ -389,7 +388,7 @@ class Messages(commands.Cog):
     @commands.group(name="user")
     async def user_(self, ctx: commands.Context):
         """User boards"""
-        await utils.Discord.send_help(ctx)
+        await utils.discord.send_help(ctx)
 
     @commands.guild_only()
     @commands.check(check.acl)
@@ -465,13 +464,13 @@ class Messages(commands.Cog):
         joined_dc = joined_dc.strftime("%d.%m.%Y\n%H:%M:%S")
 
         if member.colour != nextcord.Colour.default():
-            embed = utils.Discord.create_embed(
+            embed = utils.discord.create_embed(
                 author=ctx.message.author,
                 title=_(ctx, "User information"),
                 color=member.colour,
             )
         else:
-            embed = utils.Discord.create_embed(
+            embed = utils.discord.create_embed(
                 author=ctx.message.author, title=_(ctx, "User information")
             )
 
@@ -558,7 +557,7 @@ class Messages(commands.Cog):
         ]
 
         for idx, chunk in enumerate(chunks, start=1):
-            embed = utils.Discord.create_embed(
+            embed = utils.discord.create_embed(
                 author=ctx.message.author,
                 title=title,
                 description=description,
@@ -610,7 +609,7 @@ class Messages(commands.Cog):
         author_position = -1
         author_item = None
         for idx, chunk in enumerate(chunks, start=1):
-            embed = utils.Discord.create_embed(
+            embed = utils.discord.create_embed(
                 author=ctx.message.author,
                 title=title,
                 description=description,

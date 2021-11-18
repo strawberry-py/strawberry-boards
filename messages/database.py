@@ -20,7 +20,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 import nextcord
 
-from database import database, session
+from pie.database import database, session
 
 
 class UserChannelConfig(database.base):

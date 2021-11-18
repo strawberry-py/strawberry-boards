@@ -9,8 +9,7 @@ from emoji import UNICODE_EMOJI as _UNICODE_EMOJI
 import nextcord
 from nextcord.ext import commands, tasks
 
-from core import check, i18n, logger, utils
-from core import TranslationContext
+from pie import check, i18n, logger, utils
 
 from .database import (
     KarmaMember,
@@ -68,7 +67,7 @@ class Karma(commands.Cog):
         if emoji_value == 0:
             return
 
-        message: nextcord.Message = await utils.Discord.get_message(
+        message: nextcord.Message = await utils.discord.get_message(
             self.bot,
             reaction.guild_id,
             reaction.channel_id,
@@ -79,7 +78,7 @@ class Karma(commands.Cog):
         while message is None:
             if timeout >= 3:
                 raise nextcord.NotFound
-            message = await utils.Discord.get_message(
+            message = await utils.discord.get_message(
                 self.bot,
                 reaction.guild_id,
                 reaction.channel_id,
@@ -177,7 +176,7 @@ class Karma(commands.Cog):
     @commands.check(check.acl)
     @commands.group(name="karma")
     async def karma_(self, ctx):
-        await utils.Discord.send_help(ctx)
+        await utils.discord.send_help(ctx)
 
     @commands.check(check.acl)
     @karma_.command(name="get")
@@ -187,7 +186,7 @@ class Karma(commands.Cog):
             member = ctx.author
         kmember = KarmaMember.get_or_add(ctx.guild.id, member.id)
 
-        embed = utils.Discord.create_embed(
+        embed = utils.discord.create_embed(
             author=ctx.author,
             title=_(ctx, "User karma"),
             description=utils.Text.sanitise(member.display_name),
@@ -238,7 +237,7 @@ class Karma(commands.Cog):
             await ctx.reply(_(ctx, "This emoji does not have karma value."))
             return
 
-        embed = utils.Discord.create_embed(
+        embed = utils.discord.create_embed(
             author=ctx.author,
             title=_(ctx, "Emoji karma"),
         )
@@ -337,7 +336,7 @@ class Karma(commands.Cog):
         self, ctx, emoji: Optional[Union[nextcord.PartialEmoji, str]] = None
     ):
         """Vote over emoji's karma value."""
-        await utils.Discord.delete_message(ctx.message)
+        await utils.discord.delete_message(ctx.message)
 
         if emoji is None:
             voted_ids = [e.emoji_id for e in DiscordEmoji.get_all(ctx.guild.id)]
@@ -551,7 +550,7 @@ class Karma(commands.Cog):
             else:
                 output["neutral"].append(emoji)
 
-        embed = utils.Discord.create_embed(
+        embed = utils.discord.create_embed(
             author=ctx.author,
             title=_(ctx, "Message karma"),
             description=_(
@@ -711,7 +710,7 @@ class Karma(commands.Cog):
     @karma_.group(name="ignore")
     async def karma_ignore(self, ctx):
         """Manage channels where karma is disabled."""
-        await utils.Discord.send_help(ctx)
+        await utils.discord.send_help(ctx)
 
     @commands.check(check.acl)
     @karma_ignore.command(name="list")
@@ -789,7 +788,7 @@ class Karma(commands.Cog):
         guild_limit: int = KarmaMember.get_count(ctx.guild.id)
         limit: int = min(guild_limit, page_count * item_count)
 
-        embed = utils.Discord.create_embed(
+        embed = utils.discord.create_embed(
             author=ctx.author,
             title=title,
             description=description,
@@ -842,7 +841,7 @@ class Karma(commands.Cog):
     ) -> str:
         result = []
         line_template = "`{value:>6}` … {name}"
-        utx = TranslationContext(guild.id, author.id)
+        utx = i18n.TranslationContext(guild.id, author.id)
 
         for user in users:
             member = guild.get_member(user.user_id)

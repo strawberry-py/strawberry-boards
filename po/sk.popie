@@ -157,6 +157,90 @@ msgstr Tvoje skóre
 msgid Unknown member
 msgstr Neznámý užívateľ
 
+msgid Messageboard config was not found for this guild.
+msgstr
+
+msgid Messageboard config
+msgstr
+
+msgid Guild
+msgstr
+
+msgid Ignored channels
+msgstr
+
+msgid Ignored members
+msgstr
+
+msgid Messageboards config changed. Added: ignored_channels: {channels} ignored_members: {members}
+msgstr
+
+msgid Messageboards config was reset.
+msgstr
+
+msgid Messageboards config changed. Removed: ignored_channels: {channels} ignored_members: {members}
+msgstr
+
+msgid I couldn't find any results in the database.
+msgstr
+
+msgid Channel board
+msgstr
+
+msgid Total count of messages in channels
+msgstr
+
+msgid Channel information
+msgstr
+
+msgid Name
+msgstr
+
+msgid ID
+msgstr
+
+msgid Category
+msgstr
+
+msgid Last message
+msgstr
+
+msgid Total message count
+msgstr
+
+msgid Channel rank
+msgstr
+
+msgid Total count of messages by users
+msgstr
+
+msgid User board
+msgstr
+
+msgid User information
+msgstr
+
+msgid Status
+msgstr
+
+msgid Joined discord
+msgstr
+
+msgid Joined guild
+msgstr
+
+msgid User rank
+msgstr
+
+msgid Roles
+msgstr
+
+msgid Top {offset}
+msgstr
+
+msgid Your position
+msgstr
+
 msgid Points
 msgstr Body
 

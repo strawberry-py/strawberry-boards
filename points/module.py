@@ -2,8 +2,8 @@ import datetime
 import random
 from typing import Union, Dict, List
 
-import discord
-from discord.ext import commands, tasks
+import nextcord
+from nextcord.ext import commands, tasks
 
 import database.config
 from core import utils, i18n, TranslationContext
@@ -40,7 +40,7 @@ class Points(commands.Cog):
         await utils.Discord.send_help(ctx)
 
     @points.command(name="get")
-    async def points_get(self, ctx, member: discord.Member = None):
+    async def points_get(self, ctx, member: nextcord.Member = None):
         """Get user points"""
         if member is None:
             member = ctx.author
@@ -96,7 +96,7 @@ class Points(commands.Cog):
             return
 
         # Ignore DMs
-        if not isinstance(message.channel, discord.TextChannel):
+        if not isinstance(message.channel, nextcord.TextChannel):
             return
 
         value = random.randint(LIMITS_MESSAGE[0], LIMITS_MESSAGE[1])
@@ -113,8 +113,8 @@ class Points(commands.Cog):
 
     @staticmethod
     def _get_page(
-        guild: discord.Guild,
-        author: Union[discord.User, discord.Member],
+        guild: nextcord.Guild,
+        author: Union[nextcord.User, nextcord.Member],
         users: list,
         offset: int = 0,
     ) -> str:
@@ -142,7 +142,7 @@ class Points(commands.Cog):
         order: BoardOrder,
         element_count: int,
         page_count: int,
-    ) -> List[discord.Embed]:
+    ) -> List[nextcord.Embed]:
         elements = []
 
         author = UserStats.get_stats(ctx.guild.id, ctx.author.id)

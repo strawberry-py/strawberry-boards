@@ -58,6 +58,7 @@ class Messages(commands.Cog):
     async def before_bulker(self):
         """Wait until the bot is ready."""
         await self.bot.wait_until_ready()
+        await self._sync()
 
     @bulker.after_loop
     async def after_bulker(self):
@@ -73,7 +74,9 @@ class Messages(commands.Cog):
                 self.positive_cache = pd.DataFrame(df_columns)
             else:
                 df = pd.DataFrame(columns=self.positive_cache.columns)
-                minus_rows = self.positive_cache.loc[df.channel_id == channel.id, :]
+                minus_rows = self.positive_cache.loc[
+                    self.positive_cache.channel_id == channel.id, :
+                ]
                 df = df.append(minus_rows, ignore_index=True)
                 self.positive_cache.drop(minus_rows.index, inplace=True)
 
@@ -100,7 +103,9 @@ class Messages(commands.Cog):
                 self.negative_cache = pd.DataFrame(df_columns)
             else:
                 df2 = pd.DataFrame(columns=self.negative_cache.columns)
-                minus_rows = self.negative_cache.loc[df2.channel_id == channel.id, :]
+                minus_rows = self.negative_cache.loc[
+                    self.negative_cache.channel_id == channel.id, :
+                ]
                 df2 = df2.append(minus_rows, ignore_index=True)
                 self.negative_cache.drop(minus_rows.index, inplace=True)
 
@@ -120,6 +125,117 @@ class Messages(commands.Cog):
             items = df2.to_dict("records")
             for item in items:
                 UserChannel.bulk_decrement(item)
+
+    async def _sync(
+        self, gld: nextcord.Guild = None, chnnl: nextcord.abc.GuildChannel = None
+    ):
+        """Synchronizes new messages that were sent during the bot was offline to the database."""
+        total_count = 0
+        async with self.lock:
+            for guild in self.bot.guilds:
+                if gld is not None and guild.id != gld.id:
+                    continue
+                channel_counts = UserChannel.get_channel_counts(
+                    guild=guild, webhooks=True, include_filtered=True
+                )
+                guild_count = 0
+                channels_and_threads = guild.channels + guild.threads
+                for channel in channels_and_threads:
+                    if chnnl is not None and channel.id != chnnl.id:
+                        continue
+                    elif isinstance(channel, (nextcord.TextChannel, nextcord.Thread)):
+                        msgs = []
+                        if channel_counts is None:
+                            try:
+                                msgs = await channel.history(
+                                    limit=None, oldest_first=True
+                                ).flatten()
+                            except nextcord.errors.Forbidden:
+                                await self.log(
+                                    level="warning",
+                                    message=f"Forbidden getting history for channel {channel} in guild {guild.name}",
+                                )
+                        else:
+                            count = next(
+                                (
+                                    x
+                                    for x in channel_counts
+                                    if channel.id == x.channel_id
+                                ),
+                                None,
+                            )
+                            if count is not None:
+                                try:
+                                    msgs = await channel.history(
+                                        limit=None,
+                                        after=count.last_msg_at.replace(
+                                            tzinfo=datetime.timezone.utc
+                                        ),
+                                        oldest_first=True,
+                                    ).flatten()
+                                except nextcord.errors.Forbidden:
+                                    await self.log(
+                                        level="warning",
+                                        message="Forbidden getting history for channel {channel} in guild {guild}".format(
+                                            channel=channel, guild=guild.name
+                                        ),
+                                    )
+                            else:
+                                try:
+                                    msgs = await channel.history(
+                                        limit=None, oldest_first=True
+                                    ).flatten()
+                                except nextcord.errors.Forbidden:
+                                    await self.log(
+                                        level="warning",
+                                        message="Forbidden getting history for channel {channel} in guild {guild}".format(
+                                            channel=channel, guild=guild.name
+                                        ),
+                                    )
+
+                        if len(msgs) > 0:
+                            guild_count += len(msgs)
+                            if isinstance(channel, nextcord.Thread):
+                                channel_name = f"{channel.parent.name}: 🧵{channel.name}"
+                            else:
+                                channel_name = channel.name
+
+                            msgs_dicts = [
+                                {
+                                    "guild_id": x.guild.id,
+                                    "guild_name": x.guild.name,
+                                    "channel_id": x.channel.id,
+                                    "channel_name": channel_name,
+                                    "user_id": x.author.id,
+                                    "user_name": x.author.display_name,
+                                    "webhook_id": x.webhook_id,
+                                    "last_msg_at": x.created_at,
+                                }
+                                for x in msgs
+                                if not x.type
+                                == nextcord.MessageType.thread_starter_message
+                            ]
+                            self.positive_cache = self.positive_cache.append(
+                                msgs_dicts, ignore_index=True, sort=False
+                            )
+                            self._save_cache(channel=channel)
+                            await guild_log.debug(
+                                None,
+                                guild,
+                                f"Channel {channel.name} was synced. \n Synchronized {len(msgs)} new messages.",
+                            )
+
+                total_count += guild_count
+                await guild_log.info(
+                    None,
+                    guild,
+                    f"Message count database was successfully synced. \n Synchronized {guild_count} new messages.",
+                )
+            await bot_log.info(
+                None,
+                None,
+                f"Message count database was successfully synced. \n Synchronized {total_count} new messages.",
+            )
 
     # COMMANDS
     @commands.guild_only()
@@ -774,104 +890,11 @@ class Messages(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        """Syncronizes new messages that were sent during the bot was offline to the database."""
-        total_count = 0
-        async with self.lock:
+        await self._sync()
 
-            for guild in self.bot.guilds:
-                channel_counts = UserChannel.get_channel_counts(
-                    guild=guild, webhooks=True, include_filtered=True
-                )
-                guild_count = 0
-                channels_and_threads = guild.channels + guild.threads
-                for channel in channels_and_threads:
-                    if isinstance(channel, (nextcord.TextChannel, nextcord.Thread)):
-                        if channel_counts is None:
-                            try:
-                                msgs = await channel.history(
-                                    limit=None, oldest_first=True
-                                ).flatten()
-                            except nextcord.errors.Forbidden:
-                                await self.log(
-                                    level="warning",
-                                    message=f"Forbidden getting history for channel {channel} in guild {guild.name}",
-                                )
-                        else:
-                            count = next(
-                                (
-                                    x
-                                    for x in channel_counts
-                                    if channel.id == x.channel_id
-                                ),
-                                None,
-                            )
-                            if count is not None:
-                                try:
-                                    msgs = await channel.history(
-                                        limit=None,
-                                        after=count.last_msg_at.replace(
-                                            tzinfo=datetime.timezone.utc
-                                        ),
-                                        oldest_first=True,
-                                    ).flatten()
-                                except nextcord.errors.Forbidden:
-                                    await self.log(
-                                        level="warning",
-                                        message="Forbidden getting history for channel {channel} in guild {guild}".format(
-                                            channel=channel, guild=guild.name
-                                        ),
-                                    )
-                            else:
-                                try:
-                                    msgs = await channel.history(
-                                        limit=None, oldest_first=True
-                                    ).flatten()
-                                except nextcord.errors.Forbidden:
-                                    await self.log(
-                                        level="warning",
-                                        message="Forbidden getting history for channel {channel} in guild {guild}".format(
-                                            channel=channel, guild=guild.name
-                                        ),
-                                    )
-
-                        if len(msgs) > 0:
-                            if isinstance(channel, nextcord.Thread):
-                                channel_name = f"{channel.parent.name}: 🧵{channel.name}"
-                            else:
-                                channel_name = channel.name
-
-                            guild_count += len(msgs)
-                            msgs_dicts = [
-                                {
-                                    "guild_id": x.guild.id,
-                                    "guild_name": x.guild.name,
-                                    "channel_id": x.channel.id,
-                                    "channel_name": channel_name,
-                                    "user_id": x.author.id,
-                                    "user_name": x.author.display_name,
-                                    "webhook_id": x.webhook_id,
-                                    "last_msg_at": x.created_at,
-                                }
-                                for x in msgs
-                                if not x.type
-                                == nextcord.MessageType.thread_starter_message
-                            ]
-                            self.positive_cache = self.positive_cache.append(
-                                msgs_dicts, ignore_index=True, sort=False
-                            )
-
-                total_count += guild_count
-                self._save_cache()
-                await guild_log.info(
-                    None,
-                    guild,
-                    f"Message count database was successfully synced. \n Synchronized {guild_count} new messages.",
-                )
-            await bot_log.info(
-                None,
-                None,
-                f"Message count database was successfully synced. \n Synchronized {total_count} new messages.",
-            )
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        await self._sync(gld=guild)
 
 
 def setup(bot) -> None:

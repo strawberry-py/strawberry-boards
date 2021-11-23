@@ -32,7 +32,7 @@ class UserChannelConfig(database.base):
         ignored_members: IDs of users that are ignored when ranking.
     """
 
-    __tablename__ = "user_channels_config"
+    __tablename__ = "boards_messages_config"
 
     guild_id = Column(BigInteger, primary_key=True, autoincrement=False)
     ignored_channels = Column(ARRAY(BigInteger))
@@ -135,7 +135,7 @@ class UserChannel(database.base):
         last_msg_at: When the last message was sent.
     """
 
-    __tablename__ = "user_channels"
+    __tablename__ = "boards_messages_userchannels"
 
     idx = Column(Integer, primary_key=True, autoincrement=True)
     guild_id = Column(BigInteger)

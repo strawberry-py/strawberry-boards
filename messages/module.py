@@ -99,7 +99,7 @@ class Messages(commands.Cog):
 
         if not self.negative_cache.empty:
             if channel is None:
-                df = self.negative_cache
+                df2 = self.negative_cache
                 self.negative_cache = pd.DataFrame(df_columns)
             else:
                 df2 = pd.DataFrame(columns=self.negative_cache.columns)

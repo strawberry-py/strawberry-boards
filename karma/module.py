@@ -376,12 +376,13 @@ class Karma(commands.Cog):
             + f"karma vote takes {time_limit} minutes and {voter_limit} voters.",
         )
 
+        gtx = i18n.TranslationContext(ctx.guild.id, None)
         message = (
-            _(ctx, "Karma vote over the value of {emoji} started.")
+            _(gtx, "Karma vote over the value of {emoji} started.")
             + "\n"
-            + _(ctx, "The vote will run for **{minutes}** minutes.")
+            + _(gtx, "The vote will run for **{minutes}** minutes.")
             + " "
-            + _(ctx, "Required minimum vote count is **{count}**.")
+            + _(gtx, "Required minimum vote count is **{count}**.")
         )
 
         vote_message = await ctx.send(
@@ -424,7 +425,7 @@ class Karma(commands.Cog):
                 log_message + " Not enough votes, aborted.",
             )
             await ctx.send(
-                _(ctx, "Vote over {emoji} failed (not enough votes).").format(
+                _(gtx, "Vote over {emoji} failed (not enough votes).").format(
                     emoji=str(emoji)
                 )
             )
@@ -444,7 +445,7 @@ class Karma(commands.Cog):
                 log_message + " Inconclusive, aborted.",
             )
             await ctx.send(
-                _(ctx, "Vote over {emoji} ended in a draw.").format(emoji=str(emoji))
+                _(gtx, "Vote over {emoji} ended in a draw.").format(emoji=str(emoji))
             )
             return
 
@@ -457,7 +458,7 @@ class Karma(commands.Cog):
             ctx.author, ctx.channel, log_message + f" Setting to {result}."
         )
         await ctx.send(
-            _(ctx, "Karma value of {emoji} is **{value}**.").format(
+            _(gtx, "Karma value of {emoji} is **{value}**.").format(
                 emoji=str(emoji), value=result
             )
         )

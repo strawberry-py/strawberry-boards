@@ -158,91 +158,91 @@ msgid Unknown member
 msgstr Neznámý užívateľ
 
 msgid Messageboard config was not found for this guild.
-msgstr
+msgstr Messageboard konfigurácia nebola pre tento server nájdená.
 
 msgid Messageboard config
-msgstr
+msgstr Messageboard konfigurácia
 
 msgid Guild
-msgstr
+msgstr Server 
 
 msgid Ignored channels
-msgstr
+msgstr Ignorované kanály 
 
 msgid Ignored members
-msgstr
+msgstr Ignorovaní používatelia
 
 msgid Messageboards config changed. Added: ignored_channels: {channels} ignored_members: {members}
-msgstr
+msgstr Messageboards konfigurácia sa zmenila. Pridané: ignorované_kanály: {channels} ignorovaní_používatelia: {members}   
 
 msgid Messageboards config was reset.
-msgstr
+msgstr Messageboards konfigurácia bola vyresetovaná. 
 
 msgid Messageboards config changed. Removed: ignored_channels: {channels} ignored_members: {members}
-msgstr
+msgstr Messageboards konfigurácia sa zmenila. Odstránené: ignorované_kanály: {channels} ignorovaní_používatelia: {members}
 
 msgid I couldn't find any results in the database.
-msgstr
+msgstr V databázi nemám žiadne výsledky.
 
 msgid Channel board
-msgstr
+msgstr Kanálová tabula 
 
 msgid Total count of messages in channels
-msgstr
+msgstr Celkový počet správ v kanáloch
 
-msgid Channel information
-msgstr
+msgid Channel information 
+msgstr Informácie o kanáli
 
 msgid Name
-msgstr
+msgstr Meno
 
 msgid ID
-msgstr
+msgstr ID
 
 msgid Category
-msgstr
+msgstr Kategória
 
 msgid Last message
-msgstr
+msgstr Posledná správa
 
 msgid Total message count
-msgstr
+msgstr Celkový počet správ
 
 msgid Channel rank
-msgstr
+msgstr Pozícia kanálu 
 
 msgid Total count of messages by users
-msgstr
+msgstr Celkový počet správ od užívateľov 
 
 msgid User board
-msgstr
+msgstr Užívatelská tabula
 
 msgid User information
-msgstr
+msgstr Informácie o užívatelovi 
 
 msgid Status
-msgstr
+msgstr Status
 
 msgid Joined discord
-msgstr
+msgstr Registrovaný
 
 msgid Joined guild
-msgstr
+msgstr Pridaný na server 
 
 msgid User rank
-msgstr
+msgstr Pozícia užívatela 
 
 msgid Roles
-msgstr
+msgstr Role
 
 msgid Top {offset}
-msgstr
+msgstr Top {offset}
 
 msgid Your position
-msgstr
+msgstr Tvoja pozícia
 
 msgid Points
-msgstr Body
+msgstr Body 
 
 msgid **{user}'s** points
 msgstr Body užívateľa **{user}'s**

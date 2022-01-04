@@ -4,7 +4,7 @@ import asyncio
 import datetime
 import pandas as pd
 
-from typing import List
+from typing import Dict, List
 
 import nextcord
 from nextcord.ext.commands.bot import Bot
@@ -606,11 +606,18 @@ class Messages(commands.Cog):
                 author=ctx.message.author, title=_(ctx, "User information")
             )
 
-        status = (
-            "Do not diturb"
-            if str(member.status) == "dnd"
-            else str(member.status).title()
-        )
+        states: Dict[str, str] = {
+            "online": _(ctx, "Online"),
+            "offline": _(ctx, "Offline"),
+            "idle": _(ctx, "Idle"),
+            "dnd": _(ctx, "Do not disturb"),
+            "do_not_disturb": _(ctx, "Do not disturb"),
+        }
+        status: str
+        try:
+            status = states[str(member.status)]
+        except KeyError:
+            status = "*" + str(member.status).title() + "*"
 
         embed.set_thumbnail(url=member.display_avatar.url)
 

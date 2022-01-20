@@ -58,7 +58,6 @@ class Messages(commands.Cog):
     async def before_bulker(self):
         """Wait until the bot is ready."""
         await self.bot.wait_until_ready()
-        await self._sync()
 
     @bulker.after_loop
     async def after_bulker(self):
@@ -774,7 +773,7 @@ class Messages(commands.Cog):
                 inline=False,
             )
 
-        pages.append(embed)
+            pages.append(embed)
 
         if author_position != -1:
             for idx, embed in enumerate(pages, start=1):
@@ -828,7 +827,7 @@ class Messages(commands.Cog):
     async def on_message_delete(self, message: nextcord.Message):
         """Adds message to negative_cache if it was deleted in a guild channel."""
         if isinstance(message.channel, nextcord.TextChannel):
-            self.negative_cache = self.positive_cache.append(
+            self.negative_cache = self.negative_cache.append(
                 {
                     "guild_id": message.guild.id,
                     "guild_name": message.guild.name,
@@ -845,7 +844,7 @@ class Messages(commands.Cog):
             isinstance(message.channel, nextcord.Thread)
             and not message.type == nextcord.MessageType.thread_starter_message
         ):
-            self.positive_cache = self.positive_cache.append(
+            self.negative_cache = self.negative_cache.append(
                 {
                     "guild_id": message.guild.id,
                     "guild_name": message.guild.name,
@@ -864,7 +863,7 @@ class Messages(commands.Cog):
         """Adds messages to negative_cache if they were deleted in a guild channel."""
         for message in messages:
             if isinstance(message.channel, nextcord.TextChannel):
-                self.negative_cache = self.positive_cache.append(
+                self.negative_cache = self.negative_cache.append(
                     {
                         "guild_id": message.guild.id,
                         "guild_name": message.guild.name,
@@ -881,7 +880,7 @@ class Messages(commands.Cog):
                 isinstance(message.channel, nextcord.Thread)
                 and not message.type == nextcord.MessageType.thread_starter_message
             ):
-                self.positive_cache = self.positive_cache.append(
+                self.negative_cache = self.negative_cache.append(
                     {
                         "guild_id": message.guild.id,
                         "guild_name": message.guild.name,

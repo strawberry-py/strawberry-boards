@@ -51,13 +51,17 @@ class Messages(commands.Cog):
 
     @tasks.loop(seconds=5.0)
     async def bulker(self) -> None:
-        async with self.lock:
-            self._save_cache()
+        # Skip iteration when locked
+        if not self.lock.locked():
+            async with self.lock:
+                self._save_cache()
 
     @bulker.before_loop
     async def before_bulker(self):
         """Wait until the bot is ready."""
         await self.bot.wait_until_ready()
+        # wait a bit before starting the loop so that the sync process can lock first
+        await asyncio.sleep(5)
 
     @bulker.after_loop
     async def after_bulker(self):

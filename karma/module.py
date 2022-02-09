@@ -173,12 +173,13 @@ class Karma(commands.Cog):
 
     #
 
-    @commands.check(check.acl)
+    @commands.guild_only()
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="karma")
     async def karma_(self, ctx):
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="get")
     async def karma_get(self, ctx, member: Optional[nextcord.Member] = None):
         """Display karma information on some user."""
@@ -211,7 +212,7 @@ class Karma(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="emoji")
     async def karma_emoji(self, ctx, emoji: Union[nextcord.PartialEmoji, str]):
         """Display karma information on emoji."""
@@ -248,7 +249,7 @@ class Karma(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="emojis")
     async def karma_emojis(self, ctx):
         """Display karma emojis on this server."""
@@ -330,7 +331,7 @@ class Karma(commands.Cog):
                 ),
             )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="vote")
     async def karma_vote(
         self, ctx, emoji: Optional[Union[nextcord.PartialEmoji, str]] = None
@@ -463,7 +464,7 @@ class Karma(commands.Cog):
             )
         )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="unset")
     async def karma_unset(self, ctx, emoji: Union[nextcord.PartialEmoji, str]):
         """Set emoji's karma value."""
@@ -489,7 +490,7 @@ class Karma(commands.Cog):
         )
         await ctx.reply(_(ctx, "Emoji's karma value has been unset."))
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="set")
     async def karma_set(
         self, ctx, emoji: Union[nextcord.PartialEmoji, str], value: int
@@ -520,7 +521,7 @@ class Karma(commands.Cog):
         )
         await ctx.reply(_(ctx, "The value has been set."))
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="message")
     async def karma_message(self, ctx, message: nextcord.Message):
         """Display total message karma."""
@@ -600,7 +601,7 @@ class Karma(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="give")
     async def karma_give(
         self, ctx, value: int, members: commands.Greedy[nextcord.Member]
@@ -633,7 +634,7 @@ class Karma(commands.Cog):
             f"{value} karma points added to " + ", ".join([m.name for m in members]),
         )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="leaderboard")
     async def karma_leaderboard(self, ctx):
         """Display karma leaders."""
@@ -652,7 +653,7 @@ class Karma(commands.Cog):
         scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="loserboard")
     async def karma_loserboard(self, ctx):
         """Display karma losers."""
@@ -671,7 +672,7 @@ class Karma(commands.Cog):
         scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="givingboard")
     async def karma_givingboard(self, ctx):
         """Display karma givers."""
@@ -690,7 +691,7 @@ class Karma(commands.Cog):
         scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="takingboard")
     async def karma_takingboard(self, ctx):
         """Display karma takers."""
@@ -709,13 +710,13 @@ class Karma(commands.Cog):
         scrollable = utils.ScrollableEmbed(ctx, embeds)
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.SUBMOD)
     @karma_.group(name="ignore")
     async def karma_ignore(self, ctx):
         """Manage channels where karma is disabled."""
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.SUBMOD)
     @karma_ignore.command(name="list")
     async def karma_ignore_list(self, ctx):
         """List channels where karma is disabled."""
@@ -736,7 +737,7 @@ class Karma(commands.Cog):
         for table_page in table_pages:
             await ctx.send("```" + table_page + "```")
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @karma_ignore.command(name="set")
     async def karma_ignore_set(self, ctx, channel: nextcord.TextChannel):
         """Ignore karma in supplied channel."""
@@ -754,7 +755,7 @@ class Karma(commands.Cog):
             )
         )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @karma_ignore.command(name="unset")
     async def karma_ignore_unset(self, ctx, channel: nextcord.TextChannel):
         """Stop ignoring karma in supplied channel."""

@@ -242,21 +242,21 @@ class Messages(commands.Cog):
 
     # COMMANDS
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.SUBMOD)
     @commands.group(name="messages")
     async def messages_(self, ctx: commands.Context):
         """Messageboards configuration"""
         await utils.discord.send_help(ctx)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.SUBMOD)
     @messages_.group(name="config")
     async def messages_config_(self, ctx: commands.Context):
         """Messageboards configuration"""
         await utils.discord.send_help(ctx)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.SUBMOD)
     @messages_config_.command(name="get")
     async def messages_config_get(self, ctx: commands.Context):
         """Get Messageboards configuration for current guild."""
@@ -305,7 +305,7 @@ class Messages(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @messages_config_.command(name="ignore")
     async def messages_config_ignore(
         self,
@@ -337,7 +337,7 @@ class Messages(commands.Cog):
         await self.messages_config_get(ctx)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @messages_config_.command(name="reset")
     async def messages_config_reset(self, ctx: commands.Context):
         """Reset the configuration. Deletes all ignored items."""
@@ -362,7 +362,7 @@ class Messages(commands.Cog):
         await self.messages_config_get(ctx)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @messages_config_.command(name="remove")
     async def messages_config_remove(
         self,
@@ -411,14 +411,14 @@ class Messages(commands.Cog):
         await self.messages_config_get(ctx)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="channel")
     async def channel_(self, ctx: commands.Context):
         """Channel boards"""
         await utils.discord.send_help(ctx)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @channel_.command(name="board")
     async def channel_board(self, ctx: commands.Context):
         """Channel message leaderboard"""
@@ -443,7 +443,7 @@ class Messages(commands.Cog):
         await scrollable.scroll()
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @channel_.command(name="info")
     async def channel_info(
         self, ctx: commands.Context, channel: nextcord.TextChannel = None
@@ -519,14 +519,14 @@ class Messages(commands.Cog):
         await scrollable.scroll()
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="user")
     async def user_(self, ctx: commands.Context):
         """User boards"""
         await utils.discord.send_help(ctx)
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @user_.command(name="board")
     async def user_board(self, ctx: commands.Context):
         """User message leaderboard"""
@@ -551,7 +551,7 @@ class Messages(commands.Cog):
         await scrollable.scroll()
 
     @commands.guild_only()
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @user_.command(name="info")
     async def user_info(self, ctx: commands.Context, member: nextcord.Member = None):
         """User information with channel leaderboard for the user

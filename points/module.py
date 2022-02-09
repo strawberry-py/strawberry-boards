@@ -6,7 +6,7 @@ import nextcord
 from nextcord.ext import commands, tasks
 
 import pie.database.config
-from pie import utils, i18n
+from pie import check, utils, i18n
 
 from .database import UserStats, BoardOrder
 
@@ -34,11 +34,13 @@ class Points(commands.Cog):
     # Commands
 
     @commands.guild_only()
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="points")
     async def points(self, ctx):
         """Get information about user points"""
         await utils.discord.send_help(ctx)
 
+    @check.acl2(check.ACLevel.MEMBER)
     @points.command(name="get")
     async def points_get(self, ctx, member: nextcord.Member = None):
         """Get user points"""
@@ -67,6 +69,7 @@ class Points(commands.Cog):
         await ctx.send(embed=embed)
         await utils.discord.delete_message(ctx.message)
 
+    @check.acl2(check.ACLevel.MEMBER)
     @points.command(name="leaderboard", aliases=["best"])
     async def points_leaderboard(self, ctx):
         """Points leaderboard"""

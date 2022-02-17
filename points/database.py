@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import List, Optional
 
 from sqlalchemy import BigInteger, Column, Integer, func
 
@@ -10,6 +11,44 @@ from pie.database import database, session
 class BoardOrder(Enum):
     ASC = 0
     DESC = 1
+
+
+class Setup(database.base):
+    """List of guilds where points should be counted."""
+
+    __tablename__ = "boards_points_setup"
+
+    guild_id = Column(BigInteger, primary_key=True)
+
+    @classmethod
+    def get(cls, guild_id: int) -> Optional[Setup]:
+        setup = session.query(cls).filter_by(guild_id=guild_id).one_or_none()
+        return setup
+
+    @classmethod
+    def get_all(cls) -> List[Setup]:
+        setups = session.query(cls).all()
+        return setups
+
+    @classmethod
+    def add(cls, guild_id: int) -> Optional[Setup]:
+        if cls.get(guild_id) is not None:
+            return None
+        setup = Setup(guild_id=guild_id)
+        session.add(setup)
+        session.commit()
+        return setup
+
+    @classmethod
+    def remove(cls, guild_id: int) -> bool:
+        count = session.query(cls).filter_by(guild_id=guild_id).delete()
+        return count == 1
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}>"
+
+    def dump(self):
+        return {"guild_id": self.guild_id}
 
 
 class UserStats(database.base):

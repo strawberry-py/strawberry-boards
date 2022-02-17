@@ -253,6 +253,18 @@ msgstr Top {offset}
 msgid Your position
 msgstr Tvoja pozícia
 
+msgid Points are already enabled on this server.
+msgstr Body sú na tomto serveri už zapnuté.
+
+msgid Points have been enabled.
+msgstr Počítanie bodov bolo zapnuté.
+
+msgid Points are not enabled on this server.
+msgstr Body nie sú na tomto serveri zapnuté.
+
+msgid Points have been disabled.
+msgstr Počítanie bodov bolo vypnuté.
+
 msgid Points
 msgstr Body
 

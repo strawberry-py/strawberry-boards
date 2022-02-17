@@ -6,12 +6,13 @@ import nextcord
 from nextcord.ext import commands, tasks
 
 import pie.database.config
-from pie import check, utils, i18n
+from pie import check, i18n, logger, utils
 
-from .database import UserStats, BoardOrder
+from .database import BoardOrder, Setup, UserStats
 
 _ = i18n.Translator("modules/boards").translate
 config = pie.database.config.Config.get()
+guild_log = logger.Guild.logger()
 
 LIMITS_MESSAGE = [15, 25]
 LIMITS_REACTION = [0, 5]
@@ -26,24 +27,61 @@ class Points(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        self.guilds: List[int] = []
+        self._refresh_guilds()
+
         self.stats_message = {}
         self.stats_reaction = {}
 
         self.cleanup.start()
+
+    def _refresh_guilds(self):
+        """Refresh internal list of guilds where points are enabled."""
+        self.guilds = [s.guild_id for s in Setup.get_all()]
 
     # Commands
 
     @commands.guild_only()
     @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="points")
-    async def points(self, ctx):
+    async def points_(self, ctx):
         """Get information about user points"""
         await utils.discord.send_help(ctx)
 
     @check.acl2(check.ACLevel.MEMBER)
-    @points.command(name="get")
+    @points_.command(name="enable")
+    async def points_enable(self, ctx):
+        """Start counting points on this server."""
+        if Setup.add(ctx.guild.id) is None:
+            await ctx.reply(_(ctx, "Points are already enabled on this server."))
+            return
+
+        await ctx.reply(_(ctx, "Points have been enabled."))
+        await guild_log.info(ctx.author, ctx.channel, "Points have been enabled.")
+
+        self._refresh_guilds()
+
+    @check.acl2(check.ACLevel.MEMBER)
+    @points_.command(name="disable")
+    async def points_disable(self, ctx):
+        """Stop counting points on this server."""
+        if Setup.remove(ctx.guild.id) is False:
+            await ctx.reply(_(ctx, "Points are not enabled on this server."))
+            return
+
+        await ctx.reply(_(ctx, "Points have been disabled."))
+        await guild_log.info(ctx.author, ctx.channel, "Points have been disabled.")
+
+        self._refresh_guilds()
+
+    @check.acl2(check.ACLevel.MEMBER)
+    @points_.command(name="get")
     async def points_get(self, ctx, member: nextcord.Member = None):
         """Get user points"""
+        if ctx.guild.id not in self.guilds:
+            await ctx.reply(_(ctx, "Points are not enabled on this server."))
+            return
+
         if member is None:
             member = ctx.author
 
@@ -70,9 +108,13 @@ class Points(commands.Cog):
         await utils.discord.delete_message(ctx.message)
 
     @check.acl2(check.ACLevel.MEMBER)
-    @points.command(name="leaderboard", aliases=["best"])
+    @points_.command(name="leaderboard", aliases=["best"])
     async def points_leaderboard(self, ctx):
         """Points leaderboard"""
+        if ctx.guild.id not in self.guilds:
+            await ctx.reply(_(ctx, "Points are not enabled on this server."))
+            return
+
         title = _(ctx, "Points leaderboard")
         description = _(ctx, "Score, descending")
 
@@ -100,6 +142,10 @@ class Points(commands.Cog):
 
         # Ignore DMs
         if not isinstance(message.channel, nextcord.TextChannel):
+            return
+
+        # Ignore servers without opt-in
+        if message.guild.id not in self.guilds:
             return
 
         value = random.randint(LIMITS_MESSAGE[0], LIMITS_MESSAGE[1])

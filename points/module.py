@@ -141,7 +141,7 @@ class Points(commands.Cog):
             return
 
         # Ignore DMs
-        if not isinstance(message.channel, nextcord.TextChannel):
+        if not isinstance(message.channel, (nextcord.TextChannel, nextcord.Thread)):
             return
 
         # Ignore servers without opt-in

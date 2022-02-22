@@ -48,7 +48,7 @@ class Points(commands.Cog):
         """Get information about user points"""
         await utils.discord.send_help(ctx)
 
-    @check.acl2(check.ACLevel.MEMBER)
+    @check.acl2(check.ACLevel.GUILD_OWNER)
     @points_.command(name="enable")
     async def points_enable(self, ctx):
         """Start counting points on this server."""
@@ -61,7 +61,7 @@ class Points(commands.Cog):
 
         self._refresh_guilds()
 
-    @check.acl2(check.ACLevel.MEMBER)
+    @check.acl2(check.ACLevel.GUILD_OWNER)
     @points_.command(name="disable")
     async def points_disable(self, ctx):
         """Stop counting points on this server."""

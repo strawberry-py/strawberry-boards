@@ -105,7 +105,6 @@ class Points(commands.Cog):
             value=_(ctx, message),
         )
         await ctx.send(embed=embed)
-        await utils.discord.delete_message(ctx.message)
 
     @check.acl2(check.ACLevel.MEMBER)
     @points_.command(name="leaderboard", aliases=["best"])
@@ -126,8 +125,6 @@ class Points(commands.Cog):
             element_count=10,
             page_count=10,
         )
-
-        await utils.discord.delete_message(ctx.message)
 
         scrollable_embed = utils.ScrollableEmbed(ctx, embeds)
         await scrollable_embed.scroll()

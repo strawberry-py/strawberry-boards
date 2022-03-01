@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 from sqlalchemy import (
     update,
@@ -76,9 +76,7 @@ class UserChannelConfig(database.base):
                 ignored_members=[user.id for user in ignored_members],
             )
             session.add(query)
-        print(query)
         session.commit()
-        print(query)
         return query
 
     @staticmethod
@@ -341,7 +339,7 @@ class UserChannel(database.base):
     def _filter(
         query: Query = None,
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -382,7 +380,7 @@ class UserChannel(database.base):
     @staticmethod
     def get(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -411,7 +409,7 @@ class UserChannel(database.base):
     @staticmethod
     def get_last(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks=False,
         include_filtered=False,
@@ -440,7 +438,7 @@ class UserChannel(database.base):
     @staticmethod
     def _get_user_query(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -494,7 +492,7 @@ class UserChannel(database.base):
     @staticmethod
     def _get_channel_query(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -547,7 +545,7 @@ class UserChannel(database.base):
     @staticmethod
     def get_user_counts(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -576,7 +574,7 @@ class UserChannel(database.base):
     @staticmethod
     def get_channel_counts(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -605,7 +603,7 @@ class UserChannel(database.base):
     @staticmethod
     def get_user_ranked(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -635,7 +633,7 @@ class UserChannel(database.base):
     @staticmethod
     def get_channel_ranked(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         member: nextcord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
@@ -693,7 +691,7 @@ class UserChannel(database.base):
     @staticmethod
     def get_channel_sum(
         guild: nextcord.Guild = None,
-        channel: nextcord.TextChannel = None,
+        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> int:

@@ -4,7 +4,7 @@ import asyncio
 import datetime
 import pandas as pd
 
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import nextcord
 from nextcord.ext.commands.bot import Bot
@@ -41,6 +41,7 @@ class Messages(commands.Cog):
         self.bot = bot
         self.positive_cache: pd.DataFrame = pd.DataFrame(df_columns)
         self.negative_cache: pd.DataFrame = pd.DataFrame(df_columns)
+        self.sync_cache: pd.DataFrame = pd.DataFrame(df_columns)
         self.lock = asyncio.Lock()
         self.bulker.start()
 
@@ -59,6 +60,7 @@ class Messages(commands.Cog):
     @bulker.before_loop
     async def before_bulker(self):
         """Wait until the bot is ready."""
+        print("Messages loop waiting until ready().")
         await self.bot.wait_until_ready()
         # wait a bit before starting the loop so that the sync process can lock first
         await asyncio.sleep(5)
@@ -69,9 +71,9 @@ class Messages(commands.Cog):
             async with self.lock:
                 self._save_cache()
 
-    def _save_cache(self, channel=None):
+    def _save_cache(self, channel=None, sync=False):
         pd.set_option("display.max_columns", None)
-        if not self.positive_cache.empty:
+        if not self.positive_cache.empty and not sync:
             if channel is None:
                 df = self.positive_cache
                 self.positive_cache = pd.DataFrame(df_columns)
@@ -80,9 +82,8 @@ class Messages(commands.Cog):
                 minus_rows = self.positive_cache.loc[
                     self.positive_cache.channel_id == channel.id, :
                 ]
-                df = df.append(minus_rows, ignore_index=True)
+                df = pd.concat([df, minus_rows])
                 self.positive_cache.drop(minus_rows.index, inplace=True)
-
             df["count"] = df.groupby(["guild_id", "channel_id", "user_id"])[
                 "user_id"
             ].transform("size")
@@ -93,14 +94,13 @@ class Messages(commands.Cog):
             df = sorted_df.drop_duplicates(
                 subset=["guild_id", "channel_id", "user_id"], keep="first"
             ).reset_index(drop=True)
-            df["last_msg_at"] = pd.Series(
-                df["last_msg_at"].dt.to_pydatetime(), dtype=object
-            )
+
             items = df.to_dict("records")
             for item in items:
+                item["last_msg_at"] = item["last_msg_at"].to_pydatetime()
                 UserChannel.bulk_increment(item)
 
-        if not self.negative_cache.empty:
+        if not self.negative_cache.empty and not sync:
             if channel is None:
                 df2 = self.negative_cache
                 self.negative_cache = pd.DataFrame(df_columns)
@@ -109,7 +109,7 @@ class Messages(commands.Cog):
                 minus_rows = self.negative_cache.loc[
                     self.negative_cache.channel_id == channel.id, :
                 ]
-                df2 = df2.append(minus_rows, ignore_index=True)
+                df2 = pd.concat([df2, minus_rows])
                 self.negative_cache.drop(minus_rows.index, inplace=True)
 
             df2["count"] = df2.groupby(["guild_id", "channel_id", "user_id"])[
@@ -122,123 +122,136 @@ class Messages(commands.Cog):
             df2 = sorted_df2.drop_duplicates(
                 subset=["guild_id", "channel_id", "user_id"], keep="first"
             ).reset_index(drop=True)
-            df2["last_msg_at"] = pd.Series(
-                df2["last_msg_at"].dt.to_pydatetime(), dtype=object
-            )
+
             items = df2.to_dict("records")
             for item in items:
+                item["last_msg_at"] = item["last_msg_at"].to_pydatetime()
                 UserChannel.bulk_decrement(item)
 
-    async def _sync(
-        self, gld: nextcord.Guild = None, chnnl: nextcord.abc.GuildChannel = None
-    ):
+        if not self.sync_cache.empty and sync:
+            if channel is None:
+                df3 = self.sync_cache
+                self.sync_cache = pd.DataFrame(df_columns)
+            else:
+                df3 = pd.DataFrame(columns=self.sync_cache.columns)
+                minus_rows = self.sync_cache.loc[
+                    self.sync_cache.channel_id == channel.id, :
+                ]
+                df3 = pd.concat([df3, minus_rows])
+                self.sync_cache.drop(minus_rows.index, inplace=True)
+            df3["count"] = df3.groupby(["guild_id", "channel_id", "user_id"])[
+                "user_id"
+            ].transform("size")
+            sorted_df = df3.sort_values(
+                ["guild_id", "channel_id", "user_id", "last_msg_at"],
+                ascending=False,
+            )
+            df3 = sorted_df.drop_duplicates(
+                subset=["guild_id", "channel_id", "user_id"], keep="first"
+            ).reset_index(drop=True)
+
+            items = df3.to_dict("records")
+            for item in items:
+                item["last_msg_at"] = item["last_msg_at"].to_pydatetime()
+                UserChannel.bulk_increment(item)
+
+    async def _sync_channel(
+        self,
+        channel: Union[nextcord.TextChannel, nextcord.Thread],
+    ) -> Union[int, None]:
+        channel_count = 0
+        msgs = []
+        result = -1
+        while result != 0:
+            channel_counts = UserChannel.get_channel_counts(
+                channel=channel,
+                webhooks=True,
+                include_filtered=True,
+            )
+            if channel_counts == []:
+                msgs = await channel.history(limit=5000, oldest_first=True).flatten()
+            else:
+                msgs = await channel.history(
+                    limit=5000,
+                    after=channel_counts[0].last_msg_at.replace(
+                        tzinfo=datetime.timezone.utc
+                    ),
+                    oldest_first=True,
+                ).flatten()
+
+            if len(msgs) > 0:
+                if isinstance(channel, nextcord.Thread):
+                    channel_name = f"{channel.parent.name}: 🧵{channel.name}"
+                else:
+                    channel_name = channel.name
+
+                msgs_dicts = [
+                    {
+                        "guild_id": x.guild.id,
+                        "guild_name": x.guild.name,
+                        "channel_id": x.channel.id,
+                        "channel_name": channel_name,
+                        "user_id": x.author.id,
+                        "user_name": x.author.display_name,
+                        "webhook_id": x.webhook_id,
+                        "last_msg_at": x.created_at,
+                    }
+                    for x in msgs
+                ]
+                df = pd.DataFrame.from_records(msgs_dicts)
+                self.sync_cache = pd.concat([self.positive_cache, df])
+                self._save_cache(channel=channel, sync=True)
+
+            result = len(msgs)
+            channel_count += result
+
+        return channel_count
+
+    async def _sync_guild(self, guild: nextcord.Guild):
+        guild_count = 0
+        channels_and_threads = guild.channels + guild.threads
+
+        for channel in channels_and_threads:
+            if isinstance(channel, (nextcord.TextChannel, nextcord.Thread)):
+                try:
+                    channel_count = await self._sync_channel(
+                        channel=channel,
+                    )
+                    guild_count += channel_count
+                except nextcord.errors.Forbidden:
+                    await self.log(
+                        level="warning",
+                        message=f"Forbidden getting history for channel {channel} in guild {guild.name}",
+                    )
+
+                if channel_count != 0:
+                    await guild_log.debug(
+                        None,
+                        guild,
+                        f"Channel {channel.name} was synced. \n Synchronized {channel_count} new messages.",
+                    )
+        return guild_count
+
+    async def _sync(self):
         """Synchronizes new messages that were sent during the bot was offline to the database."""
         total_count = 0
-        async with self.lock:
-            for guild in self.bot.guilds:
-                if gld is not None and guild.id != gld.id:
-                    continue
-                channel_counts = UserChannel.get_channel_counts(
-                    guild=guild, webhooks=True, include_filtered=True
-                )
-                guild_count = 0
-                channels_and_threads = guild.channels + guild.threads
-                for channel in channels_and_threads:
-                    if chnnl is not None and channel.id != chnnl.id:
-                        continue
-                    elif isinstance(channel, (nextcord.TextChannel, nextcord.Thread)):
-                        msgs = []
-                        if channel_counts is None:
-                            try:
-                                msgs = await channel.history(
-                                    limit=None, oldest_first=True
-                                ).flatten()
-                            except nextcord.errors.Forbidden:
-                                await self.log(
-                                    level="warning",
-                                    message=f"Forbidden getting history for channel {channel} in guild {guild.name}",
-                                )
-                        else:
-                            count = next(
-                                (
-                                    x
-                                    for x in channel_counts
-                                    if channel.id == x.channel_id
-                                ),
-                                None,
-                            )
-                            if count is not None:
-                                try:
-                                    msgs = await channel.history(
-                                        limit=None,
-                                        after=count.last_msg_at.replace(
-                                            tzinfo=datetime.timezone.utc
-                                        ),
-                                        oldest_first=True,
-                                    ).flatten()
-                                except nextcord.errors.Forbidden:
-                                    await self.log(
-                                        level="warning",
-                                        message="Forbidden getting history for channel {channel} in guild {guild}".format(
-                                            channel=channel, guild=guild.name
-                                        ),
-                                    )
-                            else:
-                                try:
-                                    msgs = await channel.history(
-                                        limit=None, oldest_first=True
-                                    ).flatten()
-                                except nextcord.errors.Forbidden:
-                                    await self.log(
-                                        level="warning",
-                                        message="Forbidden getting history for channel {channel} in guild {guild}".format(
-                                            channel=channel, guild=guild.name
-                                        ),
-                                    )
 
-                        if len(msgs) > 0:
-                            guild_count += len(msgs)
-                            if isinstance(channel, nextcord.Thread):
-                                channel_name = f"{channel.parent.name}: 🧵{channel.name}"
-                            else:
-                                channel_name = channel.name
-
-                            msgs_dicts = [
-                                {
-                                    "guild_id": x.guild.id,
-                                    "guild_name": x.guild.name,
-                                    "channel_id": x.channel.id,
-                                    "channel_name": channel_name,
-                                    "user_id": x.author.id,
-                                    "user_name": x.author.display_name,
-                                    "webhook_id": x.webhook_id,
-                                    "last_msg_at": x.created_at,
-                                }
-                                for x in msgs
-                                if not x.type
-                                == nextcord.MessageType.thread_starter_message
-                            ]
-                            self.positive_cache = self.positive_cache.append(
-                                msgs_dicts, ignore_index=True, sort=False
-                            )
-                            self._save_cache(channel=channel)
-                            await guild_log.debug(
-                                None,
-                                guild,
-                                f"Channel {channel.name} was synced. \n Synchronized {len(msgs)} new messages.",
-                            )
-
-                total_count += guild_count
-                await guild_log.info(
-                    None,
-                    guild,
-                    f"Message count database was successfully synced. \n Synchronized {guild_count} new messages.",
-                )
-            await bot_log.info(
-                None,
-                None,
-                f"Message count database was successfully synced. \n Synchronized {total_count} new messages.",
+        for guild in self.bot.guilds:
+            guild_count = await self._sync_guild(
+                guild=guild,
             )
+
+            total_count += guild_count
+            await guild_log.info(
+                None,
+                guild,
+                f"Message count database was successfully synced. \n Synchronized {guild_count} new messages.",
+            )
+        await bot_log.info(
+            None,
+            None,
+            f"Message count database was successfully synced. \n Synchronized {total_count} new messages.",
+        )
 
     # COMMANDS
     @commands.guild_only()
@@ -795,79 +808,9 @@ class Messages(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message):
         """Adds message to positive_cache if it came from a guild channel"""
-        if isinstance(message.channel, nextcord.TextChannel):
-            self.positive_cache = self.positive_cache.append(
-                {
-                    "guild_id": message.guild.id,
-                    "guild_name": message.guild.name,
-                    "channel_id": message.channel.id,
-                    "channel_name": message.channel.name,
-                    "user_id": message.author.id,
-                    "user_name": message.author.display_name,
-                    "webhook_id": message.webhook_id,
-                    "last_msg_at": message.created_at,
-                },
-                ignore_index=True,
-            )
-        if (
-            isinstance(message.channel, nextcord.Thread)
-            and not message.type == nextcord.MessageType.thread_starter_message
-        ):
-            self.positive_cache = self.positive_cache.append(
-                {
-                    "guild_id": message.guild.id,
-                    "guild_name": message.guild.name,
-                    "channel_id": message.channel.id,
-                    "channel_name": f"{message.channel.parent.name}: 🧵{message.channel.name}",
-                    "user_id": message.author.id,
-                    "user_name": message.author.display_name,
-                    "webhook_id": message.webhook_id,
-                    "last_msg_at": message.created_at,
-                },
-                ignore_index=True,
-            )
-
-    @commands.Cog.listener()
-    async def on_message_delete(self, message: nextcord.Message):
-        """Adds message to negative_cache if it was deleted in a guild channel."""
-        if isinstance(message.channel, nextcord.TextChannel):
-            self.negative_cache = self.negative_cache.append(
-                {
-                    "guild_id": message.guild.id,
-                    "guild_name": message.guild.name,
-                    "channel_id": message.channel.id,
-                    "channel_name": message.channel.name,
-                    "user_id": message.author.id,
-                    "user_name": message.author.display_name,
-                    "webhook_id": message.webhook_id,
-                    "last_msg_at": message.created_at,
-                },
-                ignore_index=True,
-            )
-        if (
-            isinstance(message.channel, nextcord.Thread)
-            and not message.type == nextcord.MessageType.thread_starter_message
-        ):
-            self.negative_cache = self.negative_cache.append(
-                {
-                    "guild_id": message.guild.id,
-                    "guild_name": message.guild.name,
-                    "channel_id": message.channel.id,
-                    "channel_name": f"{message.channel.parent.name}: 🧵{message.channel.name}",
-                    "user_id": message.author.id,
-                    "user_name": message.author.display_name,
-                    "webhook_id": message.webhook_id,
-                    "last_msg_at": message.created_at,
-                },
-                ignore_index=True,
-            )
-
-    @commands.Cog.listener()
-    async def on_bulk_message_delete(self, messages: List[nextcord.Message]):
-        """Adds messages to negative_cache if they were deleted in a guild channel."""
-        for message in messages:
-            if isinstance(message.channel, nextcord.TextChannel):
-                self.negative_cache = self.negative_cache.append(
+        if isinstance(message.channel, nextcord.channel.TextChannel):
+            temp_df = pd.DataFrame(
+                [
                     {
                         "guild_id": message.guild.id,
                         "guild_name": message.guild.name,
@@ -877,14 +820,15 @@ class Messages(commands.Cog):
                         "user_name": message.author.display_name,
                         "webhook_id": message.webhook_id,
                         "last_msg_at": message.created_at,
-                    },
-                    ignore_index=True,
-                )
-            if (
-                isinstance(message.channel, nextcord.Thread)
-                and not message.type == nextcord.MessageType.thread_starter_message
-            ):
-                self.negative_cache = self.negative_cache.append(
+                    }
+                ]
+            )
+        if (
+            isinstance(message.channel, nextcord.threads.Thread)
+            and not message.type == nextcord.MessageType.thread_starter_message
+        ):
+            temp_df = pd.DataFrame(
+                [
                     {
                         "guild_id": message.guild.id,
                         "guild_name": message.guild.name,
@@ -894,17 +838,85 @@ class Messages(commands.Cog):
                         "user_name": message.author.display_name,
                         "webhook_id": message.webhook_id,
                         "last_msg_at": message.created_at,
-                    },
-                    ignore_index=True,
-                )
+                    }
+                ]
+            )
+
+        self.positive_cache = pd.concat([self.positive_cache, temp_df])
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: nextcord.Message):
+        """Adds message to negative_cache if it was deleted in a guild channel."""
+        if isinstance(message.channel, nextcord.TextChannel):
+            temp_df = pd.DataFrame(
+                [
+                    {
+                        "guild_id": message.guild.id,
+                        "guild_name": message.guild.name,
+                        "channel_id": message.channel.id,
+                        "channel_name": message.channel.name,
+                        "user_id": message.author.id,
+                        "user_name": message.author.display_name,
+                        "webhook_id": message.webhook_id,
+                        "last_msg_at": message.created_at,
+                    }
+                ]
+            )
+        if (
+            isinstance(message.channel, nextcord.Thread)
+            and not message.type == nextcord.MessageType.thread_starter_message
+        ):
+            temp_df = pd.DataFrame(
+                [
+                    {
+                        "guild_id": message.guild.id,
+                        "guild_name": message.guild.name,
+                        "channel_id": message.channel.id,
+                        "channel_name": f"{message.channel.parent.name}: 🧵{message.channel.name}",
+                        "user_id": message.author.id,
+                        "user_name": message.author.display_name,
+                        "webhook_id": message.webhook_id,
+                        "last_msg_at": message.created_at,
+                    }
+                ]
+            )
+        self.negative_cache = pd.concat([self.negative_cache, temp_df])
+
+    @commands.Cog.listener()
+    async def on_bulk_message_delete(self, messages: List[nextcord.Message]):
+        """Adds messages to negative_cache if they were deleted in a guild channel."""
+        msgs_dicts = [
+            {
+                "guild_id": x.guild.id,
+                "guild_name": x.guild.name,
+                "channel_id": x.channel.id,
+                "channel_name": x.channel.name
+                if isinstance(x.channel, nextcord.TextChannel)
+                else f"{x.channel.parent.name}: 🧵{x.channel.name}",
+                "user_id": x.author.id,
+                "user_name": x.author.display_name,
+                "webhook_id": x.webhook_id,
+                "last_msg_at": x.created_at,
+            }
+            for x in messages
+            if not x.type == nextcord.MessageType.thread_starter_message
+            and (
+                isinstance(x.channel, nextcord.TextChannel)
+                or isinstance(x.channel, nextcord.Thread)
+            )
+        ]
+        df = pd.DataFrame.from_records(msgs_dicts)
+        self.negative_cache = pd.concat([self.negative_cache, df])
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self._sync()
+        async with self.lock:
+            await self._sync()
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        await self._sync(gld=guild)
+        async with self.lock:
+            await self._sync_guild(guild=guild)
 
 
 def setup(bot) -> None:

@@ -6,8 +6,8 @@ from typing import Optional, List, Tuple, Union, Set
 from emoji import UNICODE_EMOJI as _UNICODE_EMOJI
 
 
-import nextcord
-from nextcord.ext import commands, tasks
+import discord
+from discord.ext import commands, tasks
 
 from pie import check, i18n, logger, utils
 
@@ -54,7 +54,7 @@ class Karma(commands.Cog):
         if self.karma_cache_loop.is_being_cancelled():
             self.karma_cache_save()
 
-    async def karma_cache_check(self, reaction: nextcord.RawReactionActionEvent):
+    async def karma_cache_check(self, reaction: discord.RawReactionActionEvent):
         if IgnoredChannel.get(reaction.guild_id, reaction.channel_id):
             return
 
@@ -67,7 +67,7 @@ class Karma(commands.Cog):
         if emoji_value == 0:
             return
 
-        message: nextcord.Message = await utils.discord.get_message(
+        message: discord.Message = await utils.discord.get_message(
             self.bot,
             reaction.guild_id,
             reaction.channel_id,
@@ -120,11 +120,11 @@ class Karma(commands.Cog):
             member.save()
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, reaction: nextcord.RawReactionActionEvent):
+    async def on_raw_reaction_add(self, reaction: discord.RawReactionActionEvent):
         """Handle added reactions."""
         try:
             check_result = await self.karma_cache_check(reaction)
-        except nextcord.NotFound:
+        except discord.NotFound:
             await guild_log.debug(
                 reaction.user_id,
                 reaction.channel_id,
@@ -147,11 +147,11 @@ class Karma(commands.Cog):
             self.taken_cache[author_r] += -emoji_value
 
     @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, reaction: nextcord.RawReactionActionEvent):
+    async def on_raw_reaction_remove(self, reaction: discord.RawReactionActionEvent):
         """Handle removed reactions."""
         try:
             check_result = await self.karma_cache_check(reaction)
-        except nextcord.NotFound:
+        except discord.NotFound:
             await guild_log.debug(
                 reaction.user_id,
                 reaction.channel_id,
@@ -181,7 +181,7 @@ class Karma(commands.Cog):
 
     @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="get")
-    async def karma_get(self, ctx, member: Optional[nextcord.Member] = None):
+    async def karma_get(self, ctx, member: Optional[discord.Member] = None):
         """Display karma information on some user."""
         if member is None:
             member = ctx.author
@@ -214,13 +214,13 @@ class Karma(commands.Cog):
 
     @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="emoji")
-    async def karma_emoji(self, ctx, emoji: Union[nextcord.PartialEmoji, str]):
+    async def karma_emoji(self, ctx, emoji: Union[discord.PartialEmoji, str]):
         """Display karma information on emoji."""
-        if isinstance(emoji, nextcord.PartialEmoji):
+        if isinstance(emoji, discord.PartialEmoji):
             karma_emoji = DiscordEmoji.get(ctx.guild.id, emoji.id)
             emoji_url = emoji.url
         elif re.match(EMOJI_REGEX, emoji):
-            found_emoji = nextcord.utils.get(
+            found_emoji = discord.utils.get(
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
@@ -232,7 +232,7 @@ class Karma(commands.Cog):
 
         else:
             karma_emoji = UnicodeEmoji.get(ctx.guild.id, emoji)
-            emoji_url = nextcord.Embed.Empty
+            emoji_url = None
 
         if not karma_emoji:
             await ctx.reply(_(ctx, "This emoji does not have karma value."))
@@ -283,7 +283,7 @@ class Karma(commands.Cog):
                 if isinstance(emoji, DiscordEmoji):
                     emoji = emoji.emoji_id
                 if isinstance(emoji, int):
-                    guild_emoji: Optional[nextcord.Emoji] = self.bot.get_emoji(emoji)
+                    guild_emoji: Optional[discord.Emoji] = self.bot.get_emoji(emoji)
                     if guild_emoji is None:
                         DiscordEmoji.remove(ctx.guild.id, emoji)
                         missing_emojis += 1
@@ -334,7 +334,7 @@ class Karma(commands.Cog):
     @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="vote")
     async def karma_vote(
-        self, ctx, emoji: Optional[Union[nextcord.PartialEmoji, str]] = None
+        self, ctx, emoji: Optional[Union[discord.PartialEmoji, str]] = None
     ):
         """Vote over emoji's karma value."""
         await utils.discord.delete_message(ctx.message)
@@ -352,14 +352,14 @@ class Karma(commands.Cog):
             )
             return
 
-        if emoji is not None and isinstance(emoji, nextcord.PartialEmoji):
+        if emoji is not None and isinstance(emoji, discord.PartialEmoji):
             emoji = next((x for x in ctx.guild.emojis if x.id == emoji.id), None)
             if emoji is None:
                 await ctx.author.send(_(ctx, "That emoji is not from this server."))
                 return
 
         if isinstance(emoji, str) and re.match(EMOJI_REGEX, emoji):
-            found_emoji = nextcord.utils.get(
+            found_emoji = discord.utils.get(
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
@@ -392,7 +392,7 @@ class Karma(commands.Cog):
 
         # Set the value to zero, so we can run this command multiple times
         # without starting a vote over the same emoji over and over.
-        if isinstance(emoji, nextcord.Emoji):
+        if isinstance(emoji, discord.Emoji):
             DiscordEmoji.add(ctx.guild.id, emoji.id, 0)
 
         await guild_log.info(
@@ -450,7 +450,7 @@ class Karma(commands.Cog):
             )
             return
 
-        if isinstance(emoji, nextcord.Emoji):
+        if isinstance(emoji, discord.Emoji):
             DiscordEmoji.add(ctx.guild.id, emoji.id, result)
         if isinstance(emoji, str):
             UnicodeEmoji.add(ctx.guild.id, emoji, result)
@@ -466,14 +466,14 @@ class Karma(commands.Cog):
 
     @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="unset")
-    async def karma_unset(self, ctx, emoji: Union[nextcord.PartialEmoji, str]):
+    async def karma_unset(self, ctx, emoji: Union[discord.PartialEmoji, str]):
         """Set emoji's karma value."""
         emoji_name: str
-        if isinstance(emoji, nextcord.PartialEmoji):
+        if isinstance(emoji, discord.PartialEmoji):
             DiscordEmoji.remove(ctx.guild.id, emoji.id)
             emoji_name = emoji.name
         elif re.match(EMOJI_REGEX, emoji):
-            found_emoji = nextcord.utils.get(
+            found_emoji = discord.utils.get(
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
@@ -492,19 +492,17 @@ class Karma(commands.Cog):
 
     @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="set")
-    async def karma_set(
-        self, ctx, emoji: Union[nextcord.PartialEmoji, str], value: int
-    ):
+    async def karma_set(self, ctx, emoji: Union[discord.PartialEmoji, str], value: int):
         """Set emoji's karma value."""
         if value not in (-1, 0, 1):
             await ctx.reply(_(ctx, "Usual values are only 1, 0 or -1."))
 
         emoji_name: str
-        if isinstance(emoji, nextcord.PartialEmoji):
+        if isinstance(emoji, discord.PartialEmoji):
             DiscordEmoji.add(ctx.guild.id, emoji.id, value)
             emoji_name = emoji.name
         elif re.match(EMOJI_REGEX, emoji):
-            found_emoji = nextcord.utils.get(
+            found_emoji = discord.utils.get(
                 ctx.guild.emojis, name=emoji.replace(":", "")
             )
             if not found_emoji:
@@ -523,7 +521,7 @@ class Karma(commands.Cog):
 
     @check.acl2(check.ACLevel.MEMBER)
     @karma_.command(name="message")
-    async def karma_message(self, ctx, message: nextcord.Message):
+    async def karma_message(self, ctx, message: discord.Message):
         """Display total message karma."""
         if IgnoredChannel.get(message.guild.id, message.channel.id) is not None:
             await ctx.reply(_(ctx, "Karma is disabled in message's channel."))
@@ -532,7 +530,7 @@ class Karma(commands.Cog):
         message_karma: int = 0
         output = {"negative": [], "neutral": [], "positive": []}
         for reaction in message.reactions:
-            if type(reaction.emoji) is nextcord.Emoji:
+            if type(reaction.emoji) is discord.Emoji:
                 emoji = DiscordEmoji.get(ctx.guild.id, reaction.emoji.id)
             elif type(reaction.emoji) is str:
                 emoji = UnicodeEmoji.get(ctx.guild.id, reaction.emoji)
@@ -604,7 +602,7 @@ class Karma(commands.Cog):
     @check.acl2(check.ACLevel.MOD)
     @karma_.command(name="give")
     async def karma_give(
-        self, ctx, value: int, members: commands.Greedy[nextcord.Member]
+        self, ctx, value: int, members: commands.Greedy[discord.Member]
     ):
         """Give some karma to multiple users."""
         if not members:
@@ -739,7 +737,7 @@ class Karma(commands.Cog):
 
     @check.acl2(check.ACLevel.MOD)
     @karma_ignore.command(name="set")
-    async def karma_ignore_set(self, ctx, channel: nextcord.TextChannel):
+    async def karma_ignore_set(self, ctx, channel: discord.TextChannel):
         """Ignore karma in supplied channel."""
         ignored_channel = IgnoredChannel.add(ctx.guild.id, channel.id)
         if ignored_channel is None:
@@ -757,7 +755,7 @@ class Karma(commands.Cog):
 
     @check.acl2(check.ACLevel.MOD)
     @karma_ignore.command(name="unset")
-    async def karma_ignore_unset(self, ctx, channel: nextcord.TextChannel):
+    async def karma_ignore_unset(self, ctx, channel: discord.TextChannel):
         """Stop ignoring karma in supplied channel."""
         unignored_channel = IgnoredChannel.remove(ctx.guild.id, channel.id)
         if unignored_channel is None:
@@ -785,8 +783,8 @@ class Karma(commands.Cog):
         order: BoardOrder,
         item_count: int = 10,
         page_count: int = 10,
-    ) -> List[nextcord.Embed]:
-        pages: List[nextcord.Embed] = []
+    ) -> List[discord.Embed]:
+        pages: List[discord.Embed] = []
 
         author = KarmaMember.get(ctx.guild.id, ctx.author.id)
         guild_limit: int = KarmaMember.get_count(ctx.guild.id)
@@ -839,8 +837,8 @@ class Karma(commands.Cog):
     @staticmethod
     def _create_embed_page(
         users: List[KarmaMember],
-        author: nextcord.Member,
-        guild: nextcord.Guild,
+        author: discord.Member,
+        guild: discord.Guild,
         board: BoardType,
     ) -> str:
         result = []
@@ -867,7 +865,7 @@ class Karma(commands.Cog):
         return "\n".join(result)
 
     @staticmethod
-    def _get_karma_vote_config(guild: nextcord.Guild) -> Tuple[str, int, int]:
+    def _get_karma_vote_config(guild: discord.Guild) -> Tuple[str, int, int]:
         """Based on guild size, determine vote parameters.
 
         Returns:
@@ -891,5 +889,5 @@ class Karma(commands.Cog):
         return ("large", 180, 15)
 
 
-def setup(bot) -> None:
-    bot.add_cog(Karma(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(Karma(bot))

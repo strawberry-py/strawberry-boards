@@ -6,9 +6,9 @@ import pandas as pd
 
 from typing import Dict, List, Union
 
-import nextcord
-from nextcord.ext.commands.bot import Bot
-from nextcord.ext import tasks, commands
+import discord
+from discord.ext.commands.bot import Bot
+from discord.ext import tasks, commands
 
 import pie.database.config
 from pie import check, i18n, logger, utils
@@ -157,7 +157,7 @@ class Messages(commands.Cog):
 
     async def _sync_channel(
         self,
-        channel: Union[nextcord.TextChannel, nextcord.Thread],
+        channel: Union[discord.TextChannel, discord.Thread],
     ) -> Union[int, None]:
         channel_count = 0
         msgs = []
@@ -180,7 +180,7 @@ class Messages(commands.Cog):
                 ).flatten()
 
             if len(msgs) > 0:
-                if isinstance(channel, nextcord.Thread):
+                if isinstance(channel, discord.Thread):
                     channel_name = f"{channel.parent.name}: 🧵{channel.name}"
                 else:
                     channel_name = channel.name
@@ -207,18 +207,18 @@ class Messages(commands.Cog):
 
         return channel_count
 
-    async def _sync_guild(self, guild: nextcord.Guild):
+    async def _sync_guild(self, guild: discord.Guild):
         guild_count = 0
         channels_and_threads = guild.channels + guild.threads
 
         for channel in channels_and_threads:
-            if isinstance(channel, (nextcord.TextChannel, nextcord.Thread)):
+            if isinstance(channel, (discord.TextChannel, discord.Thread)):
                 try:
                     channel_count = await self._sync_channel(
                         channel=channel,
                     )
                     guild_count += channel_count
-                except nextcord.errors.Forbidden:
+                except discord.errors.Forbidden:
                     await self.log(
                         level="warning",
                         message=f"Forbidden getting history for channel {channel} in guild {guild.name}",
@@ -323,8 +323,8 @@ class Messages(commands.Cog):
     async def messages_config_ignore(
         self,
         ctx: commands.Context,
-        channels: commands.Greedy[nextcord.TextChannel],
-        members: commands.Greedy[nextcord.Member],
+        channels: commands.Greedy[discord.TextChannel],
+        members: commands.Greedy[discord.Member],
     ):
         """Set channels or members as ignored so they won't be shown in the boards.
 
@@ -380,8 +380,8 @@ class Messages(commands.Cog):
     async def messages_config_remove(
         self,
         ctx: commands.Context,
-        channels: commands.Greedy[nextcord.TextChannel],
-        members: commands.Greedy[nextcord.Member],
+        channels: commands.Greedy[discord.TextChannel],
+        members: commands.Greedy[discord.Member],
     ):
         """Remove members or channels from ignored list.
 
@@ -459,7 +459,7 @@ class Messages(commands.Cog):
     @check.acl2(check.ACLevel.MEMBER)
     @channel_.command(name="info")
     async def channel_info(
-        self, ctx: commands.Context, channel: nextcord.TextChannel = None
+        self, ctx: commands.Context, channel: discord.TextChannel = None
     ):
         """Channel information with user leaderboard for the channel
 
@@ -566,7 +566,7 @@ class Messages(commands.Cog):
     @commands.guild_only()
     @check.acl2(check.ACLevel.MEMBER)
     @user_.command(name="info")
-    async def user_info(self, ctx: commands.Context, member: nextcord.Member = None):
+    async def user_info(self, ctx: commands.Context, member: discord.Member = None):
         """User information with channel leaderboard for the user
 
         Args:
@@ -611,7 +611,7 @@ class Messages(commands.Cog):
         )
         joined_dc = joined_dc.strftime("%d.%m.%Y\n%H:%M:%S")
 
-        if member.colour != nextcord.Colour.default():
+        if member.colour != discord.Colour.default():
             embed = utils.discord.create_embed(
                 author=ctx.message.author,
                 title=_(ctx, "User information"),
@@ -692,7 +692,7 @@ class Messages(commands.Cog):
         title: str,
         description: str,
         item_count: int = 10,
-    ) -> List[nextcord.Embed]:
+    ) -> List[discord.Embed]:
         """Creates the embed pages for channel boards
 
         Args:
@@ -705,7 +705,7 @@ class Messages(commands.Cog):
         Returns:
             List of embeds
         """
-        pages: List[nextcord.Embed] = []
+        pages: List[discord.Embed] = []
         chunks = [
             channel_counts[i : i + item_count]
             for i in range(0, len(channel_counts), item_count)
@@ -742,7 +742,7 @@ class Messages(commands.Cog):
         title: str,
         description: str,
         item_count: int = 10,
-    ) -> List[nextcord.Embed]:
+    ) -> List[discord.Embed]:
         """Creates the embed pages for user boards
 
         Args:
@@ -755,7 +755,7 @@ class Messages(commands.Cog):
         Returns:
             List of embeds
         """
-        pages: List[nextcord.Embed] = []
+        pages: List[discord.Embed] = []
         chunks = [
             user_counts[i : i + item_count]
             for i in range(0, len(user_counts), item_count)
@@ -806,9 +806,9 @@ class Messages(commands.Cog):
     # LISTENERS
 
     @commands.Cog.listener()
-    async def on_message(self, message: nextcord.Message):
+    async def on_message(self, message: discord.Message):
         """Adds message to positive_cache if it came from a guild channel"""
-        if isinstance(message.channel, nextcord.channel.TextChannel):
+        if isinstance(message.channel, discord.channel.TextChannel):
             temp_df = pd.DataFrame(
                 [
                     {
@@ -824,8 +824,8 @@ class Messages(commands.Cog):
                 ]
             )
         if (
-            isinstance(message.channel, nextcord.threads.Thread)
-            and not message.type == nextcord.MessageType.thread_starter_message
+            isinstance(message.channel, discord.threads.Thread)
+            and not message.type == discord.MessageType.thread_starter_message
         ):
             temp_df = pd.DataFrame(
                 [
@@ -845,9 +845,9 @@ class Messages(commands.Cog):
         self.positive_cache = pd.concat([self.positive_cache, temp_df])
 
     @commands.Cog.listener()
-    async def on_message_delete(self, message: nextcord.Message):
+    async def on_message_delete(self, message: discord.Message):
         """Adds message to negative_cache if it was deleted in a guild channel."""
-        if isinstance(message.channel, nextcord.TextChannel):
+        if isinstance(message.channel, discord.TextChannel):
             temp_df = pd.DataFrame(
                 [
                     {
@@ -863,8 +863,8 @@ class Messages(commands.Cog):
                 ]
             )
         if (
-            isinstance(message.channel, nextcord.Thread)
-            and not message.type == nextcord.MessageType.thread_starter_message
+            isinstance(message.channel, discord.Thread)
+            and not message.type == discord.MessageType.thread_starter_message
         ):
             temp_df = pd.DataFrame(
                 [
@@ -883,7 +883,7 @@ class Messages(commands.Cog):
         self.negative_cache = pd.concat([self.negative_cache, temp_df])
 
     @commands.Cog.listener()
-    async def on_bulk_message_delete(self, messages: List[nextcord.Message]):
+    async def on_bulk_message_delete(self, messages: List[discord.Message]):
         """Adds messages to negative_cache if they were deleted in a guild channel."""
         msgs_dicts = [
             {
@@ -891,7 +891,7 @@ class Messages(commands.Cog):
                 "guild_name": x.guild.name,
                 "channel_id": x.channel.id,
                 "channel_name": x.channel.name
-                if isinstance(x.channel, nextcord.TextChannel)
+                if isinstance(x.channel, discord.TextChannel)
                 else f"{x.channel.parent.name}: 🧵{x.channel.name}",
                 "user_id": x.author.id,
                 "user_name": x.author.display_name,
@@ -899,10 +899,10 @@ class Messages(commands.Cog):
                 "last_msg_at": x.created_at,
             }
             for x in messages
-            if not x.type == nextcord.MessageType.thread_starter_message
+            if not x.type == discord.MessageType.thread_starter_message
             and (
-                isinstance(x.channel, nextcord.TextChannel)
-                or isinstance(x.channel, nextcord.Thread)
+                isinstance(x.channel, discord.TextChannel)
+                or isinstance(x.channel, discord.Thread)
             )
         ]
         df = pd.DataFrame.from_records(msgs_dicts)
@@ -919,5 +919,5 @@ class Messages(commands.Cog):
             await self._sync_guild(guild=guild)
 
 
-def setup(bot) -> None:
-    bot.add_cog(Messages(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(Messages(bot))

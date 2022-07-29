@@ -18,7 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import flag_modified
 
-import nextcord
+import discord
 
 from pie.database import database, session
 
@@ -40,9 +40,9 @@ class UserChannelConfig(database.base):
 
     @staticmethod
     def add(
-        guild: nextcord.Guild,
-        ignored_channels: List[nextcord.TextChannel] = None,
-        ignored_members: List[nextcord.Member] = None,
+        guild: discord.Guild,
+        ignored_channels: List[discord.TextChannel] = None,
+        ignored_members: List[discord.Member] = None,
     ) -> UserChannelConfig:
         """Updates the Guild Config item. Creates if not already present
 
@@ -80,7 +80,7 @@ class UserChannelConfig(database.base):
         return query
 
     @staticmethod
-    def get(guild: nextcord.Guild) -> Optional[UserChannelConfig]:
+    def get(guild: discord.Guild) -> Optional[UserChannelConfig]:
         """Retreives the guild configuration
 
         Args:
@@ -147,7 +147,7 @@ class UserChannel(database.base):
     last_msg_at = Column(DateTime)
 
     @staticmethod
-    def increment(message: nextcord.Message, positive: bool) -> UserChannel:
+    def increment(message: discord.Message, positive: bool) -> UserChannel:
         """Increment user_channel count by one, if it doesn't exist, create it
 
         Args:
@@ -338,9 +338,9 @@ class UserChannel(database.base):
     @staticmethod
     def _filter(
         query: Query = None,
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> Query:
@@ -379,9 +379,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def get(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> List[UserChannel]:
@@ -408,9 +408,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def get_last(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks=False,
         include_filtered=False,
     ) -> UserChannel:
@@ -437,9 +437,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def _get_user_query(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> Query:
@@ -491,9 +491,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def _get_channel_query(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> Query:
@@ -544,9 +544,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def get_user_counts(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> List[UserChannel]:
@@ -573,9 +573,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def get_channel_counts(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> List[UserChannel]:
@@ -602,9 +602,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def get_user_ranked(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> UserChannel:
@@ -632,9 +632,9 @@ class UserChannel(database.base):
 
     @staticmethod
     def get_channel_ranked(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> UserChannel:
@@ -662,8 +662,8 @@ class UserChannel(database.base):
 
     @staticmethod
     def get_user_sum(
-        guild: nextcord.Guild = None,
-        member: nextcord.Member = None,
+        guild: discord.Guild = None,
+        member: discord.Member = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> int:
@@ -690,8 +690,8 @@ class UserChannel(database.base):
 
     @staticmethod
     def get_channel_sum(
-        guild: nextcord.Guild = None,
-        channel: Union[nextcord.TextChannel, nextcord.Thread] = None,
+        guild: discord.Guild = None,
+        channel: Union[discord.TextChannel, discord.Thread] = None,
         webhooks: bool = False,
         include_filtered: bool = False,
     ) -> int:

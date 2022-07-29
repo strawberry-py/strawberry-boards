@@ -2,8 +2,8 @@ import datetime
 import random
 from typing import Union, Dict, List
 
-import nextcord
-from nextcord.ext import commands, tasks
+import discord
+from discord.ext import commands, tasks
 
 import pie.database.config
 from pie import check, i18n, logger, utils
@@ -76,7 +76,7 @@ class Points(commands.Cog):
 
     @check.acl2(check.ACLevel.MEMBER)
     @points_.command(name="get")
-    async def points_get(self, ctx, member: nextcord.Member = None):
+    async def points_get(self, ctx, member: discord.Member = None):
         """Get user points"""
         if ctx.guild.id not in self.guilds:
             await ctx.reply(_(ctx, "Points are not enabled on this server."))
@@ -138,7 +138,7 @@ class Points(commands.Cog):
             return
 
         # Ignore DMs
-        if not isinstance(message.channel, (nextcord.TextChannel, nextcord.Thread)):
+        if not isinstance(message.channel, (discord.TextChannel, discord.Thread)):
             return
 
         # Ignore servers without opt-in
@@ -159,8 +159,8 @@ class Points(commands.Cog):
 
     @staticmethod
     def _get_page(
-        guild: nextcord.Guild,
-        author: Union[nextcord.User, nextcord.Member],
+        guild: discord.Guild,
+        author: Union[discord.User, discord.Member],
         users: list,
         offset: int = 0,
     ) -> str:
@@ -188,7 +188,7 @@ class Points(commands.Cog):
         order: BoardOrder,
         element_count: int,
         page_count: int,
-    ) -> List[nextcord.Embed]:
+    ) -> List[discord.Embed]:
         elements = []
 
         author = UserStats.get_stats(ctx.guild.id, ctx.author.id)
@@ -268,5 +268,5 @@ class Points(commands.Cog):
                 self.stats_reaction[guild].pop(uid)
 
 
-def setup(bot) -> None:
-    bot.add_cog(Points(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(Points(bot))

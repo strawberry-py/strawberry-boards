@@ -102,7 +102,7 @@ class Points(commands.Cog):
         embed.set_thumbnail(url=member.display_avatar.replace(size=256).url)
         embed.add_field(
             name=_(ctx, "Points and ranking"),
-            value=_(ctx, message),
+            value=message,
         )
         await ctx.send(embed=embed)
 

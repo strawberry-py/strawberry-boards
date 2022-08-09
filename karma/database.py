@@ -93,6 +93,7 @@ class KarmaMember(database.base):
     def value_position(self) -> int:
         value = (
             session.query(func.count(KarmaMember.user_id))
+            .filter_by(guild_id=self.guild_id)
             .filter(KarmaMember.value > self.value)
             .one()
         )
@@ -102,6 +103,7 @@ class KarmaMember(database.base):
     def given_position(self) -> int:
         value = (
             session.query(func.count(KarmaMember.user_id))
+            .filter_by(guild_id=self.guild_id)
             .filter(KarmaMember.given > self.given)
             .one()
         )
@@ -111,6 +113,7 @@ class KarmaMember(database.base):
     def taken_position(self) -> int:
         value = (
             session.query(func.count(KarmaMember.user_id))
+            .filter_by(guild_id=self.guild_id)
             .filter(KarmaMember.taken > self.taken)
             .one()
         )

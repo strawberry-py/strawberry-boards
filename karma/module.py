@@ -3,9 +3,6 @@ import math
 import re
 from typing import Optional, List, Tuple, Union, Set
 
-from emoji import UNICODE_EMOJI as _UNICODE_EMOJI
-
-
 import discord
 from discord.ext import commands, tasks
 
@@ -19,9 +16,6 @@ from .database import (
     BoardOrder,
     BoardType,
 )
-
-UNICODE_EMOJI = _UNICODE_EMOJI["en"]
-del _UNICODE_EMOJI
 
 _ = i18n.Translator("modules/boards").translate
 bot_log = logger.Bot.logger()

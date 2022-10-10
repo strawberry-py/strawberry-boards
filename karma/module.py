@@ -535,14 +535,20 @@ class Karma(commands.Cog):
             if not emoji:
                 continue
 
+            emoji_to_append = (
+                emoji.emoji
+                if isinstance(emoji, UnicodeEmoji)
+                else self.bot.get_emoji(emoji.emoji_id)
+            )
+
             if emoji.value < 0:
-                output["negative"].append(emoji)
+                output["negative"].append(emoji_to_append)
                 message_karma -= reaction.count
             elif emoji.value > 0:
-                output["positive"].append(emoji)
+                output["positive"].append(emoji_to_append)
                 message_karma += reaction.count
             else:
-                output["neutral"].append(emoji)
+                output["neutral"].append(emoji_to_append)
 
         embed = utils.discord.create_embed(
             author=ctx.author,

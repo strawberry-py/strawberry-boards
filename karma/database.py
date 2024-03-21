@@ -189,7 +189,7 @@ class DiscordEmoji(database.base):
         )
 
     def __str__(self) -> str:
-        return f"<:pumpkin:{self.emoji_id}>"
+        return f"<:strawberry:{self.emoji_id}>"
 
     def dump(self) -> Dict[str, int]:
         return {

@@ -6,6 +6,10 @@ on:
     paths:
       - "**/*.py"
       - "**/*.yml"
+      - "**/*.yaml"
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "**/*.popie"
   pull_request:
     types: [opened, reopened, synchronize]
 
@@ -48,10 +52,15 @@ jobs:
         run: |
           flake8 . --count --statistics
 
-      - name: Run PoPie
-        run: |
-          popie --detached --strict --diff .
-
       - name: Check TODOs
         run: |
           flake8 . --select=T --exit-zero
+
+      - name: Run pytest
+        run: |
+          DB_STRING=sqlite:///test.db python3 -c "from pie import database; database.init_core(); database.init_modules();"
+          DB_STRING=sqlite:///test.db pytest --color=yes -v tests/
+
+      - name: Run PoPie
+        run: |
+          popie --strict --diff modules/base pie/

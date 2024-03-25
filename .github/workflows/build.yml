@@ -58,4 +58,4 @@ jobs:
 
       - name: Run PoPie
         run: |
-          popie --strict --diff modules/base pie/
+          popie --detached --strict --diff .

@@ -1,24 +1,23 @@
 from __future__ import annotations
 
-from typing import Optional, List, Dict, Union
+from typing import Dict, List, Optional, Union
 
+import discord
 from sqlalchemy import (
-    update,
-    func,
-    asc,
-    desc,
     ARRAY,
-    Column,
-    String,
-    Integer,
     BigInteger,
     Boolean,
+    Column,
     DateTime,
+    Integer,
+    String,
+    asc,
+    desc,
+    func,
+    update,
 )
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import flag_modified
-
-import discord
 
 from pie.database import database, session
 

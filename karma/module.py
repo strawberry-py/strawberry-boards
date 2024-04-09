@@ -1,7 +1,7 @@
 import asyncio
 import math
 import re
-from typing import Optional, List, Tuple, Union, Set
+from typing import List, Optional, Set, Tuple, Union
 
 import discord
 from discord.ext import commands, tasks
@@ -9,12 +9,12 @@ from discord.ext import commands, tasks
 from pie import check, i18n, logger, utils
 
 from .database import (
-    KarmaMember,
-    UnicodeEmoji,
-    DiscordEmoji,
-    IgnoredChannel,
     BoardOrder,
     BoardType,
+    DiscordEmoji,
+    IgnoredChannel,
+    KarmaMember,
+    UnicodeEmoji,
 )
 
 _ = i18n.Translator("modules/boards").translate

@@ -1,6 +1,6 @@
 import datetime
 import random
-from typing import Union, Dict, List
+from typing import Dict, List, Union
 
 import discord
 from discord.ext import commands, tasks

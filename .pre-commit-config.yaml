@@ -28,4 +28,5 @@ repos:
     rev: v1.10.1
     hooks:
     - id: popie
-      args: [--detached]
+      args: [".", "--detached"]
+      pass_filenames: false

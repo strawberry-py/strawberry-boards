@@ -1,21 +1,19 @@
 from __future__ import annotations
+
 import asyncio
-
 import datetime
-import pandas as pd
-
 from typing import Dict, List, Union
 
 import discord
+import pandas as pd
+from discord.ext import commands, tasks
 from discord.ext.commands.bot import Bot
-from discord.ext import tasks, commands
+from sqlalchemy.orm.attributes import flag_modified
 
 import pie.database.config
 from pie import check, i18n, logger, utils
 
 from .database import UserChannel, UserChannelConfig
-from sqlalchemy.orm.attributes import flag_modified
-
 
 _ = i18n.Translator("modules/boards").translate
 bot_log = logger.Bot.logger()
@@ -890,9 +888,11 @@ class Messages(commands.Cog):
                 "guild_id": x.guild.id,
                 "guild_name": x.guild.name,
                 "channel_id": x.channel.id,
-                "channel_name": x.channel.name
-                if isinstance(x.channel, discord.TextChannel)
-                else f"{x.channel.parent.name}: 🧵{x.channel.name}",
+                "channel_name": (
+                    x.channel.name
+                    if isinstance(x.channel, discord.TextChannel)
+                    else f"{x.channel.parent.name}: 🧵{x.channel.name}"
+                ),
                 "user_id": x.author.id,
                 "user_name": x.author.display_name,
                 "webhook_id": x.webhook_id,

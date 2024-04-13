@@ -4,11 +4,12 @@ import asyncio
 import datetime
 from typing import Dict, List, Union
 
-import discord
 import pandas as pd
+from sqlalchemy.orm.attributes import flag_modified
+
+import discord
 from discord.ext import commands, tasks
 from discord.ext.commands.bot import Bot
-from sqlalchemy.orm.attributes import flag_modified
 
 import pie.database.config
 from pie import check, i18n, logger, utils

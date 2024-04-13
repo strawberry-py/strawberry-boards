@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Union
 
-import discord
 from sqlalchemy import (
     ARRAY,
     BigInteger,
@@ -18,6 +17,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.attributes import flag_modified
+
+import discord
 
 from pie.database import database, session
 

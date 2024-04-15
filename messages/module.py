@@ -168,16 +168,21 @@ class Messages(commands.Cog):
                 include_filtered=True,
             )
             if channel_counts == []:
-                msgs = await channel.history(limit=5000, oldest_first=True).flatten()
+                msgs = [
+                    message
+                    async for message in channel.history(limit=5000, oldest_first=True)
+                ]
             else:
-                msgs = await channel.history(
-                    limit=5000,
-                    after=channel_counts[0].last_msg_at.replace(
-                        tzinfo=datetime.timezone.utc
-                    ),
-                    oldest_first=True,
-                ).flatten()
-
+                msgs = [
+                    message
+                    async for message in channel.history(
+                        limit=5000,
+                        after=channel_counts[0].last_msg_at.replace(
+                            tzinfo=datetime.timezone.utc
+                        ),
+                        oldest_first=True,
+                    )
+                ]
             if len(msgs) > 0:
                 if isinstance(channel, discord.Thread):
                     channel_name = f"{channel.parent.name}: 🧵{channel.name}"

@@ -34,9 +34,11 @@ class Karma(commands.Cog):
 
         self.karma_cache_loop.start()
 
+    # Karma cache
+
     @tasks.loop(seconds=30.0)
     async def karma_cache_loop(self) -> None:
-        self.karma_cache_save()
+        self._karma_cache_save()
 
     @karma_cache_loop.before_loop
     async def karma_cache_loop_before(self):
@@ -46,50 +48,9 @@ class Karma(commands.Cog):
     @karma_cache_loop.after_loop
     async def karma_cache_loop_after(self):
         if self.karma_cache_loop.is_being_cancelled():
-            self.karma_cache_save()
+            self._karma_cache_save()
 
-    async def karma_cache_check(self, reaction: discord.RawReactionActionEvent):
-        if IgnoredChannel.get(reaction.guild_id, reaction.channel_id):
-            return
-
-        if reaction.emoji.is_custom_emoji():
-            emoji = DiscordEmoji.get(reaction.guild_id, reaction.emoji.id)
-        else:
-            emoji = UnicodeEmoji.get(reaction.guild_id, reaction.emoji.name)
-        emoji_value: int = getattr(emoji, "value", 0)
-
-        if emoji_value == 0:
-            return
-
-        message: discord.Message = await utils.discord.get_message(
-            self.bot,
-            reaction.guild_id,
-            reaction.channel_id,
-            reaction.message_id,
-        )
-        timeout = 0
-
-        while message is None:
-            if timeout >= 3:
-                return
-            message = await utils.discord.get_message(
-                self.bot,
-                reaction.guild_id,
-                reaction.channel_id,
-                reaction.message_id,
-            )
-            timeout += 1
-            await asyncio.sleep(5)
-
-        if message.author.id == reaction.user_id:
-            return
-
-        message_author: Tuple[int, int] = (reaction.guild_id, message.author.id)
-        reaction_author: Tuple[int, int] = (reaction.guild_id, reaction.user_id)
-
-        return (message_author, reaction_author, emoji_value)
-
-    def karma_cache_save(self):
+    def _karma_cache_save(self):
         """Save the karma values in given interval."""
         value_cache = self.value_cache.copy()
         self.value_cache = {}
@@ -113,59 +74,19 @@ class Karma(commands.Cog):
             member.taken += delta
             member.save()
 
+    # Listeners
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, reaction: discord.RawReactionActionEvent):
         """Handle added reactions."""
-        try:
-            check_result = await self.karma_cache_check(reaction)
-        except discord.NotFound:
-            await guild_log.debug(
-                reaction.user_id,
-                reaction.channel_id,
-                f"Message {reaction.message_id} not found on karma reaction add.",
-            )
-
-        if not check_result:
-            return
-
-        author_m, author_r, emoji_value = check_result
-
-        self.value_cache.setdefault(author_m, 0)
-        self.value_cache[author_m] += emoji_value
-
-        if emoji_value > 0:
-            self.given_cache.setdefault(author_r, 0)
-            self.given_cache[author_r] += emoji_value
-        else:
-            self.taken_cache.setdefault(author_r, 0)
-            self.taken_cache[author_r] += -emoji_value
+        await self._process_reaction(reaction=reaction, added=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, reaction: discord.RawReactionActionEvent):
         """Handle removed reactions."""
-        try:
-            check_result = await self.karma_cache_check(reaction)
-        except discord.NotFound:
-            await guild_log.debug(
-                reaction.user_id,
-                reaction.channel_id,
-                f"Message {reaction.message_id} not found on karma reaction remove.",
-            )
-        if not check_result:
-            return
-        author_m, author_r, emoji_value = check_result
+        await self._process_reaction(reaction=reaction, added=False)
 
-        self.value_cache.setdefault(author_m, 0)
-        self.value_cache[author_m] -= emoji_value
-
-        if emoji_value > 0:
-            self.given_cache.setdefault(author_r, 0)
-            self.given_cache[author_r] -= emoji_value
-        else:
-            self.taken_cache.setdefault(author_r, 0)
-            self.taken_cache[author_r] -= -emoji_value
-
-    #
+    # Commands
 
     @commands.guild_only()
     @check.acl2(check.ACLevel.MEMBER)
@@ -771,7 +692,84 @@ class Karma(commands.Cog):
             )
         )
 
-    #
+    # Functions
+
+    async def _process_reaction(self, reaction: discord.RawReactionActionEvent, added: bool):
+        if IgnoredChannel.get(reaction.guild_id, reaction.channel_id):
+            return
+
+        emoji_value: int = Karma.get_emoji_value(reaction.guild_id, reaction.emoji)
+
+        if emoji_value == 0:
+            return
+
+        message: discord.Message = None
+        try:
+            message = await utils.discord.get_message(
+                self.bot,
+                reaction.guild_id,
+                reaction.channel_id,
+                reaction.message_id,
+            )
+        except discord.NotFound:
+            pass
+
+        if message is None:
+            await guild_log.debug(
+                reaction.user_id,
+                reaction.channel_id,
+                f"Message {reaction.message_id} not found on karma reaction add.",
+            )
+            return
+        if added:
+            await self.reaction_added(msg_author_id=message.author.id, react_author_id=reaction.user_id, emoji_value=emoji_value)
+        else:
+            await self.reaction_removed(message_author=message.author.id, reaction_author=reaction.user_id, emoji_value=emoji_value)
+
+    async def reaction_added(self, guild_id: int, msg_author_id: int, react_author_id: int, emoji_value: int):
+        """Adds karma value using the cache (when reaction is added).
+
+        :param guild_id: Guild ID of the reaction
+        :param msg_author_id: Discord ID of message author
+        :param react_author_id: Discord ID of reaction author
+        :param emoji_value: Karma value of the emoji
+        """
+        msg_author = Karma.get_cache_key(guild_id, msg_author_id)
+        react_author = Karma.get_cache_key(guild_id, react_author_id)
+
+        self.value_cache.setdefault(msg_author, 0)
+        self.value_cache[msg_author] += emoji_value
+
+        if emoji_value > 0:
+            self.given_cache.setdefault(react_author, 0)
+            self.given_cache[react_author] += emoji_value
+        else:
+            self.taken_cache.setdefault(react_author, 0)
+            self.taken_cache[react_author] += -emoji_value
+
+    async def reaction_removed(self, guild_id: int, msg_author_id: int, react_author_id: int, emoji_value: int):
+        """Removes karma value using the cache (when reaction is removed).
+
+
+        :param guild_id: Guild ID of the reaction
+        :param msg_author_id: Discord ID of message author
+        :param react_author_id: Discord ID of reaction author
+        :param emoji_value: Karma value of the emoji
+        """
+        msg_author = Karma.get_cache_key(guild_id, msg_author_id)
+        react_author = Karma.get_cache_key(guild_id, react_author_id)
+
+        self.value_cache.setdefault(msg_author, 0)
+        self.value_cache[msg_author] -= emoji_value
+
+        if emoji_value > 0:
+            self.given_cache.setdefault(react_author, 0)
+            self.given_cache[react_author] -= emoji_value
+        else:
+            self.taken_cache.setdefault(react_author, 0)
+            self.taken_cache[react_author] -= -emoji_value
+
+    # Static helper functions
 
     @staticmethod
     def _create_embeds(
@@ -887,6 +885,25 @@ class Karma(commands.Cog):
 
         # large guilds
         return ("large", 180, 15)
+
+    @staticmethod
+    def get_emoji_value(guild_id: int, emoji: discord.PartialEmoji) -> int:
+        if emoji.is_custom_emoji():
+            emoji = DiscordEmoji.get(guild_id, emoji.id)
+        else:
+            emoji = UnicodeEmoji.get(guild_id, emoji.name)
+        emoji_value: int = getattr(emoji, "value", 0)
+
+        return emoji_value
+
+    @staticmethod
+    def get_cache_key(guild_id: int, user_id: int) -> Tuple[int, int]:
+        """Prepares key for cache from guild_id and user_id.
+
+        :param guild_id: Guild ID used for cache processing.
+        :param user_id: Discord user ID for cache processing.
+        """
+        return (guild_id, user_id)
 
 
 async def setup(bot) -> None:

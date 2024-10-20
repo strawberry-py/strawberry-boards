@@ -3,7 +3,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from sqlalchemy import BigInteger, Column, Integer, String, func
+from sqlalchemy import BigInteger, Integer, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 from pie.database import database, session
 
@@ -22,12 +23,12 @@ class BoardType(Enum):
 class KarmaMember(database.base):
     __tablename__ = "boards_karma_members"
 
-    idx = Column(Integer, primary_key=True, autoincrement=True)
-    guild_id = Column(BigInteger)
-    user_id = Column(BigInteger, default=None)
-    value = Column(Integer, default=0)
-    given = Column(Integer, default=0)
-    taken = Column(Integer, default=0)
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    guild_id: Mapped[int]
+    user_id: Mapped[int] = mapped_column(BigInteger, default=None)
+    value: Mapped[int] = mapped_column(Integer, default=0)
+    given: Mapped[int] = mapped_column(Integer, default=0)
+    taken: Mapped[int] = mapped_column(Integer, default=0)
 
     @staticmethod
     def get_or_add(guild_id: int, user_id: int) -> KarmaMember:
@@ -142,10 +143,10 @@ class KarmaMember(database.base):
 class DiscordEmoji(database.base):
     __tablename__ = "boards_karma_discord_emojis"
 
-    idx = Column(Integer, primary_key=True, autoincrement=True)
-    guild_id = Column(BigInteger)
-    emoji_id = Column(BigInteger)
-    value = Column(Integer)
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    guild_id: Mapped[int] = mapped_column(BigInteger)
+    emoji_id: Mapped[int] = mapped_column(BigInteger)
+    value: Mapped[int]
 
     @staticmethod
     def add(guild_id: int, emoji_id: int, value: int) -> DiscordEmoji:
@@ -201,10 +202,10 @@ class DiscordEmoji(database.base):
 class UnicodeEmoji(database.base):
     __tablename__ = "boards_karma_unicode_emojis"
 
-    idx = Column(Integer, primary_key=True, autoincrement=True)
-    guild_id = Column(BigInteger)
-    emoji = Column(String)
-    value = Column(Integer)
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    guild_id: Mapped[int] = mapped_column(BigInteger)
+    emoji: Mapped[str]
+    value: Mapped[int]
 
     @staticmethod
     def add(guild_id: int, emoji: str, value: int) -> UnicodeEmoji:
@@ -265,9 +266,9 @@ class IgnoredChannel(database.base):
 
     __tablename__ = "boards_karma_ignored"
 
-    idx = Column(Integer, primary_key=True, autoincrement=True)
-    guild_id = Column(BigInteger)
-    channel_id = Column(BigInteger)
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    guild_id: Mapped[int] = mapped_column(BigInteger)
+    channel_id: Mapped[int] = mapped_column(BigInteger)
 
     @staticmethod
     def get(guild_id: int, channel_id: int) -> Optional[IgnoredChannel]:

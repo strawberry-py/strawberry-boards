@@ -25,6 +25,12 @@ EMOJI_REGEX = "^:[a-zA-Z0-9]+:$"
 
 
 class Karma(commands.Cog):
+    """Module uses custom cache that is dumped to DB once in a while
+    to increase performance as the reaction might be added and immediately removed.
+
+    The cache uses (guild_id, user_id) tuple as key.
+    """
+
     def __init__(self, bot):
         self.bot = bot
 

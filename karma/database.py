@@ -8,6 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from pie.database import database, session
 
+VERSION = 1
+
 
 class BoardOrder(Enum):
     ASC = 0

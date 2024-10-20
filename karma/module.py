@@ -743,8 +743,8 @@ class Karma(commands.Cog):
         else:
             await self.reaction_removed(
                 guild_id=reaction.guild_id,
-                message_author=message.author.id,
-                reaction_author=reaction.user_id,
+                msg_author_id=message.author.id,
+                react_author_id=reaction.user_id,
                 emoji_value=emoji_value,
             )
 

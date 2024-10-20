@@ -703,6 +703,10 @@ class Karma(commands.Cog):
     async def _process_reaction(
         self, reaction: discord.RawReactionActionEvent, added: bool
     ):
+        """Helper function for the reaction events.
+
+        :param reaction: Raw Reaction event to process.
+        :param added: If the reaction was added or removed."""
         if IgnoredChannel.get(reaction.guild_id, reaction.channel_id):
             return
 
@@ -802,6 +806,7 @@ class Karma(commands.Cog):
         item_count: int = 10,
         page_count: int = 10,
     ) -> List[discord.Embed]:
+        """Helper function that generates Karma embed."""
         pages: List[discord.Embed] = []
 
         author = KarmaMember.get(ctx.guild.id, ctx.author.id)
@@ -859,6 +864,7 @@ class Karma(commands.Cog):
         guild: discord.Guild,
         board: BoardType,
     ) -> str:
+        """Helper function that generates Karma embed page."""
         result = []
         line_template = "`{value:>6}` … {name}"
         utx = i18n.TranslationContext(guild.id, author.id)
@@ -886,8 +892,9 @@ class Karma(commands.Cog):
     def _get_karma_vote_config(guild: discord.Guild) -> Tuple[str, int, int]:
         """Based on guild size, determine vote parameters.
 
-        Returns:
-            Guild size, time limit (in minutes) and voter limit.
+        :param guild: Discord guild to generate the config value
+
+        :return: Guild size, time limit (in minutes) and voter limit.
         """
         member_count = len([m for m in guild.members if not m.bot])
 
@@ -908,6 +915,12 @@ class Karma(commands.Cog):
 
     @staticmethod
     def get_emoji_value(guild_id: int, emoji: discord.PartialEmoji) -> int:
+        """Get's emoji value from DB (default 0)
+
+        :param guild_id: ID of the guild
+        :param emoji: Partial Emoji to get the karma value.
+
+        :return: Emoji karma value"""
         if emoji.is_custom_emoji():
             emoji = DiscordEmoji.get(guild_id, emoji.id)
         else:

@@ -3,9 +3,12 @@ from __future__ import annotations
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import BigInteger, Column, Integer, func
+from sqlalchemy import BigInteger, Integer, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 from pie.database import database, session
+
+VERSION = 1
 
 
 class BoardOrder(Enum):
@@ -18,7 +21,7 @@ class Setup(database.base):
 
     __tablename__ = "boards_points_setup"
 
-    guild_id = Column(BigInteger, primary_key=True)
+    guild_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     @classmethod
     def get(cls, guild_id: int) -> Optional[Setup]:
@@ -56,10 +59,10 @@ class UserStats(database.base):
 
     __tablename__ = "boards_points_users"
 
-    idx = Column(Integer, primary_key=True, autoincrement=True)
-    guild_id = Column(BigInteger)
-    user_id = Column(BigInteger)
-    points = Column(Integer)
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    guild_id: Mapped[int] = mapped_column(BigInteger)
+    user_id: Mapped[int] = mapped_column(BigInteger)
+    points: Mapped[int]
 
     @staticmethod
     def get_stats(guild_id: int, user_id: int) -> UserStats:

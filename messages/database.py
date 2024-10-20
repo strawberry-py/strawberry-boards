@@ -1,26 +1,17 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Dict, List, Optional, Union
 
-from sqlalchemy import (
-    ARRAY,
-    BigInteger,
-    Boolean,
-    Column,
-    DateTime,
-    Integer,
-    String,
-    asc,
-    desc,
-    func,
-    update,
-)
-from sqlalchemy.orm import Query
+from sqlalchemy import ARRAY, BigInteger, DateTime, Integer, asc, desc, func, update
+from sqlalchemy.orm import Mapped, Query, mapped_column
 from sqlalchemy.orm.attributes import flag_modified
 
 import discord
 
 from pie.database import database, session
+
+VERSION = 1
 
 
 class UserChannelConfig(database.base):
@@ -34,9 +25,11 @@ class UserChannelConfig(database.base):
 
     __tablename__ = "boards_messages_config"
 
-    guild_id = Column(BigInteger, primary_key=True, autoincrement=False)
-    ignored_channels = Column(ARRAY(BigInteger))
-    ignored_members = Column(ARRAY(BigInteger))
+    guild_id: Mapped[int] = mapped_column(
+        BigInteger, primary_key=True, autoincrement=False
+    )
+    ignored_channels: Mapped[list[int]] = mapped_column(ARRAY(BigInteger))
+    ignored_members: Mapped[list[int]] = mapped_column(ARRAY(BigInteger))
 
     @staticmethod
     def add(
@@ -135,16 +128,16 @@ class UserChannel(database.base):
 
     __tablename__ = "boards_messages_userchannels"
 
-    idx = Column(Integer, primary_key=True, autoincrement=True)
-    guild_id = Column(BigInteger)
-    guild_name = Column(String)
-    channel_id = Column(BigInteger)
-    channel_name = Column(String)
-    user_id = Column(BigInteger)
-    user_name = Column(String)
-    is_webhook = Column(Boolean)
-    count = Column(BigInteger, default=1)
-    last_msg_at = Column(DateTime)
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    guild_id: Mapped[int] = mapped_column(BigInteger)
+    guild_name: Mapped[str]
+    channel_id: Mapped[int] = mapped_column(BigInteger)
+    channel_name: Mapped[str]
+    user_id: Mapped[int] = mapped_column(BigInteger)
+    user_name: Mapped[str]
+    is_webhook: Mapped[bool]
+    count: Mapped[int] = mapped_column(BigInteger, default=1)
+    last_msg_at: Mapped[datetime] = mapped_column(DateTime)
 
     @staticmethod
     def increment(message: discord.Message, positive: bool) -> UserChannel:

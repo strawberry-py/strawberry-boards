@@ -16,6 +16,7 @@ class BettermemesMessage(database.base):
     channel_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     message_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
     author_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    repost_channel_id: Mapped[int] = mapped_column(BigInteger)
     repost_message_id: Mapped[int] = mapped_column(BigInteger)
 
 

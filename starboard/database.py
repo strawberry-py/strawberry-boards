@@ -52,6 +52,27 @@ class StarboardMessage(database.base):
 
         return query.one_or_none()
 
+    @staticmethod
+    def add(
+        guild_id: int,
+        author_id: int,
+        source_channel_id: int,
+        source_message_id: int,
+        starboard_chanenl_id: int,
+        starboard_message_id: int,
+    ) -> StarboardChannel:
+        sb_message = StarboardMessage(
+            guild_id=guild_id,
+            author_id=author_id,
+            source_channel_id=source_channel_id,
+            source_message_id=source_message_id,
+            starboard_chanenl_id=starboard_chanenl_id,
+            starboard_message_id=starboard_message_id,
+        )
+
+        session.merge(sb_message)
+        session.commit()
+
 
 class StarboardChannel(database.base):
     __tablename__ = "boards_starboard_channels"
@@ -61,3 +82,11 @@ class StarboardChannel(database.base):
     source_channel_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     starboard_channel_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     limit: Mapped[int]
+
+    def get(guild_id: int, source_channel_id: int) -> Optional[StarboardChannel]:
+        query = session.query(StarboardChannel).filter_by(guild_id=guild_id)
+
+        if source_channel_id:
+            query = query.filter_by(source_channel_id=source_channel_id)
+
+        return query.one_or_none()

@@ -213,7 +213,9 @@ class Messages(commands.Cog):
 
     async def _sync_guild(self, guild: discord.Guild):
         guild_count = 0
-        channels_and_threads = guild.channels + guild.threads
+        channels_and_threads = [ch for ch in guild.channels] + [
+            t for t in guild.threads
+        ]
 
         for channel in channels_and_threads:
             if isinstance(channel, (discord.TextChannel, discord.Thread)):

@@ -7,9 +7,10 @@ from urllib.parse import urlparse
 from database import StarboardChannel, StarboardMessage
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
-from pie import utils
+from pie import check, utils
 from pie.bot import Strawberry, logger
 
 from ..karma.module import Karma
@@ -22,6 +23,18 @@ URL_REGEX = r"^https{0,1}:\/\/\S*"
 
 
 class Starboard(commands.Cog):
+
+    starboard: app_commands.Group = app_commands.Group(
+        name="starboard",
+        description="Starboard stats.",
+        default_permissions=discord.Permissions(read_message_history=True),
+    )
+
+    starboard_admin: app_commands.Group = app_commands.Group(
+        name="starboardadmin",
+        description="Starboard administration and management.",
+        default_permissions=discord.Permissions(administrator=True),
+    )
 
     def __init__(self, bot):
         self.bot: Strawberry = bot
@@ -48,7 +61,83 @@ class Starboard(commands.Cog):
 
     # Commands
 
-    pass
+    @app_commands.guild_only()
+    @check.acl2(check.ACLevel.MOD)
+    @starboard_admin.command(
+        name="list",
+        description="List starboard channels and it's configuration.",
+    )
+    async def starboard_list(self, itx: discord.Interaction):
+        pass
+        # TODO
+
+    @app_commands.guild_only()
+    @check.acl2(check.ACLevel.MOD)
+    @starboard_admin.command(
+        name="set", description="Set starboard channel and it's configuration."
+    )
+    @app_commands.describe(
+        source="Channel to monitor for reactions.",
+        destination="Channel to repost the source message.",
+        limit="Minimal amount of (positive) reactions to repost the message.",
+    )
+    async def starboard_set(
+        self,
+        itx: discord.Interaction,
+        source: discord.TextChannel,
+        destination: discord.TextChannel,
+        limit: int,
+    ):
+        pass
+        # TODO
+
+    @app_commands.guild_only()
+    @check.acl2(check.ACLevel.MOD)
+    @starboard_admin.command(
+        name="unset", description="Unset starboard channel and it's configuration."
+    )
+    @app_commands.describe(
+        idx="IDX of the Starboard channels combination. Can be obtained using /starboard list",
+    )
+    async def starboard_unset(self, itx: discord.Interaction, idx: int):
+        pass
+        # TODO
+
+    @app_commands.guild_only()
+    @check.acl2(check.ACLevel.MOD)
+    @starboard_admin.command(
+        name="history",
+        description="Checks the channel's latest messages for repost potential.",
+    )
+    @app_commands.describe(
+        source="Source channel to check the history.",
+        limit="Amount of messages to check.",
+    )
+    async def starboard_history(
+        self, itx: discord.Interaction, source: discord.TextChannel, limit: int = 300
+    ):
+        pass
+        # TODO
+
+    @app_commands.guild_only()
+    @check.acl2(check.ACLevel.MEMBER)
+    @starboard.command(
+        name="leaderboard", description="Lists the most starboarded users."
+    )
+    async def starboard_leaderboard(
+        self, itx: discord.Interaction, source: discord.TextChannel = None
+    ):
+        pass
+        # TODO
+
+    @app_commands.guild_only()
+    @check.acl2(check.ACLevel.MEMBER)
+    @starboard.command(name="stats", description="Display user's Starboard stats.")
+    async def starboard_info(
+        self, itx: discord.Interaction, member: discord.User = None
+    ):
+        pass
+        # TODO
 
     # Helper functions
 

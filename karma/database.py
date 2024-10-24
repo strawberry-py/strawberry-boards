@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from pie.database import database, session
 
-VERSION = 1
+VERSION = 2
 
 
 class BoardOrder(Enum):
@@ -26,7 +26,7 @@ class KarmaMember(database.base):
     __tablename__ = "boards_karma_members"
 
     idx: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    guild_id: Mapped[int]
+    guild_id: Mapped[int] = mapped_column(BigInteger, default=None)
     user_id: Mapped[int] = mapped_column(BigInteger, default=None)
     value: Mapped[int] = mapped_column(Integer, default=0)
     given: Mapped[int] = mapped_column(Integer, default=0)

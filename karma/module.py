@@ -925,12 +925,11 @@ class Karma(commands.Cog):
         :param emoji: Partial Emoji to get the karma value.
 
         :return: Emoji karma value"""
+        
         if isinstance(emoji, str):
             emoji = UnicodeEmoji.get(guild_id, emoji)
-        elif emoji.is_custom_emoji():
-            emoji = DiscordEmoji.get(guild_id, emoji.id)
         else:
-            emoji = UnicodeEmoji.get(guild_id, emoji.name)
+            emoji = DiscordEmoji.get(guild_id, emoji.id)
         emoji_value: int = getattr(emoji, "value", 0)
 
         return emoji_value

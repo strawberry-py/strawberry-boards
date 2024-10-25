@@ -1,25 +1,27 @@
 import asyncio
 import os
 import re
+from types import SimpleNamespace
 from typing import Optional, Union
 from urllib.parse import urlparse
-
-from database import StarboardChannel, StarboardMessage
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from pie import check, utils
+from pie import check, i18n, utils
 from pie.bot import Strawberry, logger
 
 from ..karma.module import Karma
+from .database import StarboardChannel, StarboardMessage
+
+ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"]
+URL_REGEX = r"^https{0,1}:\/\/\S*"
 
 bot_log = logger.Bot.logger()
 guild_log = logger.Guild.logger()
 
-ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"]
-URL_REGEX = r"^https{0,1}:\/\/\S*"
+_ = i18n.Translator("modules/boards").translate
 
 
 class Starboard(commands.Cog):
@@ -43,21 +45,25 @@ class Starboard(commands.Cog):
         self._reaction_lock = asyncio.Lock()
         self._reaction_processing = []
 
+        for sb_channel in StarboardChannel.get_all():
+            self.starboard_channels.append(sb_channel.starboard_channel_id)
+            self.source_channels.append(sb_channel.source_channel_id)
+
     # Listeners
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, reaction: discord.RawReactionActionEvent):
         """Handle added reactions."""
         if reaction.channel_id in self.source_channels:
-            await self._process_reaction(self, reaction)
+            await self._process_reaction(reaction)
         elif reaction.channel_id in self.starboard_channels:
-            await self._proxy_karma(self, reaction, added=True)
+            await self._proxy_karma(reaction, added=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, reaction: discord.RawReactionActionEvent):
         """Handle removed reactions."""
         if reaction.channel_id in self.starboard_channels:
-            await self._proxy_karma(self, reaction, added=False)
+            await self._proxy_karma(reaction, added=False)
 
     # Commands
 
@@ -67,29 +73,109 @@ class Starboard(commands.Cog):
         name="list",
         description="List starboard channels and it's configuration.",
     )
-    async def starboard_list(self, itx: discord.Interaction):
-        pass
-        # TODO
+    async def starboard_admin_list(
+        self, itx: discord.Interaction, starboard: discord.TextChannel = None
+    ):
+        sb_channels: list[StarboardChannel] = StarboardChannel.get_all(
+            guild_id=itx.guild_id,
+            starboard_channel_id=starboard.id if starboard else None,
+        )
+
+        if len(sb_channels) == 0:
+            await itx.response.send_message(
+                content=_(itx, "No starboard channel found!"), ephemeral=True
+            )
+            return
+
+        channels = []
+
+        for sb_channel in sb_channels:
+            # Dummy instance to hold the data for table_pages
+            source_channel = self.bot.get_channel(sb_channel.source_channel_id)
+            starboard_channel = self.bot.get_channel(sb_channel.starboard_channel_id)
+            channel = SimpleNamespace(
+                source_id=sb_channel.source_channel_id,
+                source_name=source_channel.name if source_channel else "?",
+                starboard_id=sb_channel.starboard_channel_id,
+                starboard_name=starboard_channel.name if starboard_channel else "?",
+                limit=sb_channel.limit,
+            )
+            channels.append(channel)
+
+        table_pages: list[str] = utils.text.create_table(
+            channels,
+            {
+                "source_id": _(itx, "Source channel ID"),
+                "source_name": _(itx, "Source channel"),
+                "starboard_id": _(itx, "Starboard channel ID"),
+                "starboard_name": _(itx, "Starboard channel"),
+                "limit": _(itx, "Limit"),
+            },
+        )
+        await itx.response.send_message(content="```" + table_pages[0] + "```")
+        for table_page in table_pages[1:]:
+            await itx.followup.send("```" + table_page + "```")
 
     @app_commands.guild_only()
     @check.acl2(check.ACLevel.MOD)
     @starboard_admin.command(
-        name="set", description="Set starboard channel and it's configuration."
+        name="set", description="Add or changes starboard channel configuration."
     )
     @app_commands.describe(
         source="Channel to monitor for reactions.",
-        destination="Channel to repost the source message.",
+        starboard="Channel to repost the message.",
         limit="Minimal amount of (positive) reactions to repost the message.",
     )
-    async def starboard_set(
+    async def starboard_admin_set(
         self,
         itx: discord.Interaction,
         source: discord.TextChannel,
-        destination: discord.TextChannel,
+        starboard: discord.TextChannel,
         limit: int,
     ):
-        pass
-        # TODO
+        if limit <= 0:
+            await itx.response.send_message(
+                content=_(itx, "Limit must be higher than 0!"), ephemeral=True
+            )
+            return
+
+        if not StarboardChannel.check_unique(itx.guild.id, source.id):
+            await itx.response.send_message(
+                content=_(
+                    itx, "Source channel is already in use as source or starboard!"
+                ),
+                ephemeral=True,
+            )
+            return
+
+        if StarboardChannel.get(guild_id=itx.guild.id, source_channel_id=starboard.id):
+            await itx.response.send_message(
+                content=_(itx, "Starboard channel is already in use as source!"),
+                ephemeral=True,
+            )
+            return
+
+        StarboardChannel.set(
+            guild_id=itx.guild.id,
+            source_channel_id=source.id,
+            starboard_channel_id=starboard.id,
+            limit=limit,
+        )
+
+        self.source_channels.append(source.id)
+        self.starboard_channels.append(starboard.id)
+
+        await itx.response.send_message(
+            content=_(
+                itx,
+                "Starboard configured to repost messages from {source_channel} to {starboard_channel} when reaching {limit} reactions.",
+            ).format(
+                source_channel=source.mention,
+                starboard_channel=starboard.mention,
+                limit=limit,
+            ),
+            ephemeral=True,
+        )
 
     @app_commands.guild_only()
     @check.acl2(check.ACLevel.MOD)
@@ -97,11 +183,52 @@ class Starboard(commands.Cog):
         name="unset", description="Unset starboard channel and it's configuration."
     )
     @app_commands.describe(
-        idx="IDX of the Starboard channels combination. Can be obtained using /starboard list",
+        source="Channel to monitor for reactions.",
     )
-    async def starboard_unset(self, itx: discord.Interaction, idx: int):
-        pass
-        # TODO
+    async def starboard_admin_unset(
+        self,
+        itx: discord.Interaction,
+        source: discord.TextChannel = None,
+        source_id: int = None,
+    ):
+        # XOR - only one of the must have value
+        if bool(source) ^ bool(source_id):
+            await itx.response.send_message(
+                content=_(
+                    itx,
+                    "Exactly one of the parameters `source` or `source_id` must be specified!",
+                ),
+                ephemeral=True,
+            )
+            return
+
+        if source:
+            source_id = source.id
+
+        sb_channel: StarboardChannel = StarboardChannel.get(
+            guild_id=itx.guild_id, source_channel_id=source_id
+        )
+
+        if not sb_channel:
+            await itx.response.send_message(
+                content=_(itx, "Channel {channel} is not configured as source!").format(
+                    channel=source.mention if source else source_id
+                ),
+                ephemeral=True,
+            )
+            return
+
+        self.source_channels.remove(sb_channel.source_channel_id)
+        self.starboard_channels.remove(sb_channel.starboard_channel_id)
+
+        sb_channel.remove()
+
+        await itx.response.send_message(
+            content=_(itx, "Channel {channel} was unset as source!").format(
+                source.mention if source else source_id
+            ),
+            ephemeral=True,
+        )
 
     @app_commands.guild_only()
     @check.acl2(check.ACLevel.MOD)
@@ -113,10 +240,12 @@ class Starboard(commands.Cog):
         source="Source channel to check the history.",
         limit="Amount of messages to check.",
     )
-    async def starboard_history(
+    async def starboard_admin_history(
         self, itx: discord.Interaction, source: discord.TextChannel, limit: int = 300
     ):
-        pass
+        await itx.response.send_message(
+            content=_(itx, "Not implemented yet."), ephemeral=True
+        )
         # TODO
 
     @app_commands.guild_only()
@@ -127,7 +256,9 @@ class Starboard(commands.Cog):
     async def starboard_leaderboard(
         self, itx: discord.Interaction, source: discord.TextChannel = None
     ):
-        pass
+        await itx.response.send_message(
+            content=_(itx, "Not implemented yet."), ephemeral=True
+        )
         # TODO
 
     @app_commands.guild_only()
@@ -136,19 +267,22 @@ class Starboard(commands.Cog):
     async def starboard_info(
         self, itx: discord.Interaction, member: discord.User = None
     ):
-        pass
+        await itx.response.send_message(
+            content=_(itx, "Not implemented yet."), ephemeral=True
+        )
         # TODO
 
     # Helper functions
 
     async def _proxy_karma(self, reaction: discord.RawReactionActionEvent, added: bool):
-        message: StarboardMessage = StarboardMessage.get(
+        messages: StarboardMessage = StarboardMessage.get_all(
             guild_id=reaction.guild_id, starboard_message_id=reaction.message_id
         )
-        if not message:
+        if not messages:
             return
+        message: StarboardMessage = messages[0]
 
-        karma: Karma = self.bot.get_cog(Karma.qualified_name)
+        karma: Karma = self.bot.get_cog("Karma")
         if not karma:
             return
 
@@ -163,14 +297,14 @@ class Starboard(commands.Cog):
             karma.reaction_added(
                 guild_id=reaction.guild_id,
                 msg_author_id=message.author_id,
-                react_author_id=reaction.member.id,
+                react_author_id=reaction.user_id,
                 emoji_value=emoji_value,
             )
         else:
             karma.reaction_removed(
                 guild_id=reaction.guild_id,
                 msg_author_id=message.author_id,
-                react_author_id=reaction.member.id,
+                react_author_id=reaction.user_id,
                 emoji_value=emoji_value,
             )
 
@@ -179,17 +313,17 @@ class Starboard(commands.Cog):
             if reaction.message_id in self._reaction_processing:
                 return
 
-            sb_message: StarboardMessage = StarboardMessage.get(
-                guild_id=reaction.guild_id, starboard_message_id=reaction.message_id
+            sb_message: StarboardMessage = StarboardMessage.get_all(
+                guild_id=reaction.guild_id, source_message_id=reaction.message_id
             )
-            if sb_message is not None:
+            if sb_message:
                 return
 
             self._reaction_processing.append(reaction.message_id)
 
         message: discord.Message = None
         try:
-            message = utils.discord.get_message(
+            message = await utils.discord.get_message(
                 bot=self.bot,
                 guild_or_user_id=reaction.guild_id,
                 channel_id=reaction.channel_id,
@@ -213,20 +347,20 @@ class Starboard(commands.Cog):
                 continue
 
             if (
-                self.bot.get_cog(Karma.qualified_name)
-                and Karma.get_emoji_value(m_reaction.emoji) < 1
+                self.bot.get_cog("Karma")
+                and Karma.get_emoji_value(message.guild.id, m_reaction.emoji) < 1
             ):
                 continue
 
             await self._repost_message(
-                reaction=reaction, channel_id=sb_db_channel.starboard_channel_id
+                channel_id=sb_db_channel.starboard_channel_id, message=message
             )
             break
 
         self._reaction_processing.remove(message.id)
 
     async def _repost_message(self, channel_id: int, message: discord.Message):
-        sb_channel: discord.TextChannel = self.bot.get_channel(id=channel_id)
+        sb_channel: discord.TextChannel = self.bot.get_channel(channel_id)
 
         if sb_channel is None:
             guild_log.warning(
@@ -245,13 +379,13 @@ class Starboard(commands.Cog):
                 author_id=message.author.id,
                 source_channel_id=message.channel.id,
                 source_message_id=message.id,
-                starboard_chanenl_id=starboard_message.channel.id,
+                starboard_channel_id=starboard_message.channel.id,
                 starboard_message_id=starboard_message.id,
             )
 
     async def _process_attachments(
         self, attachments: list[discord.Attachment], msg_content: str
-    ) -> tuple[Optional[str], Union[str, discord.File]]:
+    ) -> tuple[Optional[Union[discord.File, str]], Union[str, discord.File]]:
         embed_image = None
         secondary_attachments = []
         for attachment in attachments:
@@ -275,42 +409,42 @@ class Starboard(commands.Cog):
                     continue
             secondary_attachments.append(url)
 
-        embed_image_str: str = None
-        if embed_image is not None:
-            embed_image_str = (
-                f"attachment://{embed_image.filename}"
-                if isinstance(embed_image, discord.File)
-                else embed_image if isinstance(embed_image, str) else None
-            )
-
-        return (embed_image_str, secondary_attachments)
+        return (embed_image, secondary_attachments)
 
     async def _send_messages(
         self, channel: discord.TextChannel, message: discord.Message
     ) -> list[discord.Message]:
         embed = utils.discord.create_embed(
             author=message.author,
-            color=discord.Color.yellow,
+            color=discord.Colour.yellow(),
             title=Starboard._get_title(message.reactions),
         )
         embed.timestamp = message.created_at
         embed.add_field(
-            "Link:", f"[Original]({message.jump_url}) - <#{message.channel.id}>"
+            name="Link:",
+            value=f"[Original]({message.jump_url}) - <#{message.channel.id}>",
+            inline=False,
         )
 
         embed_image, sec_attachments = await self._process_attachments(
             attachments=message.attachments, msg_content=message.content
         )
-        if embed_image:
-            embed.set_image(url=embed_image)
+        if embed_image is not None:
+            embed.set_image(
+                url=(
+                    f"attachment://{embed_image.filename}"
+                    if isinstance(embed_image, discord.File)
+                    else embed_image if isinstance(embed_image, str) else None
+                )
+            )
 
         text: str = re.sub(URL_REGEX, "", message.content).strip()
         if text and len(embed) + len(text) < 5800:
-            embed.add_field(name="Text:", value=text)
+            embed.add_field(name="Text:", value=text, inline=False)
 
         messages: list[discord.Message] = []
         try:
-            messages.append(await channel.send(embed=embed))
+            messages.append(await channel.send(embed=embed, file=embed_image))
         except Exception as e:
             guild_log.error(
                 None,
@@ -336,7 +470,7 @@ class Starboard(commands.Cog):
         if len(sec_attachments) > 0:
             files = [file for file in sec_attachments if isinstance(file, discord.File)]
             urls = [url for url in sec_attachments if isinstance(url, str)]
-            sec_mess_text = urls[0] if urls.lenght() > 0 else None
+            sec_mess_text = urls[0] if urls else None
             for url in urls[1:]:
                 if len(sec_mess_text) + len(url) >= 2000:
                     break
@@ -358,11 +492,11 @@ class Starboard(commands.Cog):
         title_parts: list[str] = [
             f"{reaction.emoji}{reaction.count}"
             for reaction in reactions
-            if not isinstance(reaction.emoji, str)
+            if not isinstance(reaction.emoji, discord.PartialEmoji)
         ]
         title: str = ""
         for title_part in title_parts:
-            if len(title) + len(title_part) < 255:
+            if len(title) + len(title_part) > 255:
                 break
             title += title_part
 

@@ -279,3 +279,45 @@ msgstr Bodový rebríček
 
 msgid Unknown
 msgstr Neznámy
+
+msgid No starboard channel found!
+msgstr Nenašiel sa žiadny starboard kanál!
+
+msgid Source channel ID
+msgstr ID zdrojového kanála
+
+msgid Source channel
+msgstr Zdrojový kanál
+
+msgid Starboard channel ID
+msgstr ID starboard kanála
+
+msgid Starboard channel
+msgstr Starboard kanál
+
+msgid Limit
+msgstr Limit
+
+msgid Limit must be higher than 0!
+msgstr Limit musí byť vyšší ako 0!
+
+msgid Source channel is already in use as source or starboard!
+msgstr Zdrojový kanál sa už používá ako zdroj alebo starboard!
+
+msgid Starboard channel is already in use as source!
+msgstr Starboard kanál sa už používa ako zdroj!
+
+msgid Starboard configured to repost messages from {source_channel} to {starboard_channel} when reaching {limit} reactions.
+msgstr Starboard nastavený aby preposielal správy z {source_channel} to {starboard_channel} po dosiahnutí {limit} reakcií.
+
+msgid Exactly one of the parameters `source` or `source_id` must be specified!
+msgstr Presne jeden parameter (`source` alebo `source_id`) musí byť použitý!
+
+msgid Channel {channel} is not configured as source!
+msgstr Kanál {channel} nie je nastavený ako zdroj!
+
+msgid Channel {channel} was unset as source!
+msgstr
+
+msgid Not implemented yet.
+msgstr

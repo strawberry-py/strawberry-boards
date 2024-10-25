@@ -734,21 +734,21 @@ class Karma(commands.Cog):
             )
             return
         if added:
-            await self.reaction_added(
+            self.reaction_added(
                 guild_id=reaction.guild_id,
                 msg_author_id=message.author.id,
                 react_author_id=reaction.user_id,
                 emoji_value=emoji_value,
             )
         else:
-            await self.reaction_removed(
+            self.reaction_removed(
                 guild_id=reaction.guild_id,
                 msg_author_id=message.author.id,
                 react_author_id=reaction.user_id,
                 emoji_value=emoji_value,
             )
 
-    async def reaction_added(
+    def reaction_added(
         self, guild_id: int, msg_author_id: int, react_author_id: int, emoji_value: int
     ):
         """Adds karma value using the cache (when reaction is added).
@@ -771,7 +771,7 @@ class Karma(commands.Cog):
             self.taken_cache.setdefault(react_author, 0)
             self.taken_cache[react_author] += -emoji_value
 
-    async def reaction_removed(
+    def reaction_removed(
         self, guild_id: int, msg_author_id: int, react_author_id: int, emoji_value: int
     ):
         """Removes karma value using the cache (when reaction is removed).

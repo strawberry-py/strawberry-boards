@@ -496,9 +496,9 @@ class Starboard(commands.Cog):
         ]
         title: str = ""
         for title_part in title_parts:
-            if len(title) + len(title_part) > 255:
+            if len(title) + len(title_part) > 254:
                 break
-            title += title_part
+            title += f" {title_part}"
 
         return title
 

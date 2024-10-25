@@ -177,6 +177,12 @@ class Starboard(commands.Cog):
             ephemeral=True,
         )
 
+        guild_log.info(
+            itx.user,
+            itx.channel,
+            f"Channel {source.name} added as source for Starboard channel {starboard.name} with limit {limit}.",
+        )
+
     @app_commands.guild_only()
     @check.acl2(check.ACLevel.MOD)
     @starboard_admin.command(
@@ -220,6 +226,12 @@ class Starboard(commands.Cog):
 
         self.source_channels.remove(sb_channel.source_channel_id)
         self.starboard_channels.remove(sb_channel.starboard_channel_id)
+
+        guild_log.info(
+            itx.user,
+            itx.channel,
+            f"Channel {source.name if source else source_id} removed as source from Starboard.",
+        )
 
         sb_channel.remove()
 
@@ -354,6 +366,12 @@ class Starboard(commands.Cog):
 
             await self._repost_message(
                 channel_id=sb_db_channel.starboard_channel_id, message=message
+            )
+
+            guild_log.info(
+                None,
+                message.channel,
+                f"Message {message.jump_url} reached limit {sb_db_channel} reactions. Reposted to {sb_db_channel.starboard_channel_id}.",
             )
             break
 

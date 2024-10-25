@@ -341,6 +341,9 @@ class Starboard(commands.Cog):
         if not karma:
             return
 
+        if message.author_id == reaction.user_id:
+            return
+
         emoji_value = karma.get_emoji_value(
             guild_id=reaction.guild_id, emoji=reaction.emoji
         )

@@ -195,10 +195,10 @@ class Starboard(commands.Cog):
         self,
         itx: discord.Interaction,
         source: discord.TextChannel = None,
-        source_id: int = None,
+        source_id: str = None,
     ):
-        # XOR - only one of the must have value
-        if bool(source) ^ bool(source_id):
+        # NOT XOR - only one of the must have value
+        if not (bool(source) ^ bool(source_id)):
             await itx.response.send_message(
                 content=_(
                     itx,
@@ -210,6 +210,17 @@ class Starboard(commands.Cog):
 
         if source:
             source_id = source.id
+        else:
+            try:
+                source_id = int(source_id)
+            except ValueError:
+                await itx.response.send_message(
+                    content=_(
+                        itx,
+                        "Argument `source_id` is not valid channel ID!",
+                    ),
+                    ephemeral=True,
+                )
 
         sb_channel: StarboardChannel = StarboardChannel.get(
             guild_id=itx.guild_id, source_channel_id=source_id
@@ -237,7 +248,7 @@ class Starboard(commands.Cog):
 
         await itx.response.send_message(
             content=_(itx, "Channel {channel} was unset as source!").format(
-                source.mention if source else source_id
+                channel=source.mention if source else source_id
             ),
             ephemeral=True,
         )
@@ -255,10 +266,42 @@ class Starboard(commands.Cog):
     async def starboard_admin_history(
         self, itx: discord.Interaction, source: discord.TextChannel, limit: int = 300
     ):
-        await itx.response.send_message(
-            content=_(itx, "Not implemented yet."), ephemeral=True
+        sb_channel = StarboardChannel.get(
+            guild_id=itx.guild.id, source_channel_id=source.id
         )
-        # TODO
+
+        if not sb_channel:
+            await itx.response.send_message(
+                content=_(
+                    itx, "Channel {channel} is not Starboard source channel!"
+                ).format(channel=source.mention),
+                ephemeral=True,
+            )
+            return
+
+        await itx.response.defer(thinking=True, ephemeral=True)
+        async for message in source.history(limit=limit, oldest_first=True):
+            fake_emoji = discord.PartialEmoji(name="\u2764\uFE0F")
+
+            data = {
+                "user_id": itx.user.id,
+                "channel_id": source.id,
+                "message_id": message.id,
+                "emoji": fake_emoji,
+                "guild_id": itx.guild.id,
+                "type": discord.enums.ReactionType.normal,
+            }
+            event = discord.RawReactionActionEvent(
+                data=data, emoji=fake_emoji, event_type="REACTION_ADD"
+            )
+            await self._process_reaction(reaction=event)
+
+        await (await itx.original_response()).edit(
+            content=_(
+                itx,
+                "History for channel {channel} checked, processed {limit} messages.",
+            ).format(channel=source.mention, limit=limit)
+        )
 
     @app_commands.guild_only()
     @check.acl2(check.ACLevel.MEMBER)

@@ -313,11 +313,20 @@ msgstr Starboard nastaven aby posílal zprávy z {source_channel} to {starboard_
 msgid Exactly one of the parameters `source` or `source_id` must be specified!
 msgstr Přesně jeden parametr (`source` nebo `source_id`) musí být použit!
 
+msgid Argument `source_id` is not valid channel ID!
+msgstr Argument `source_id` není validní ID kanálu!
+
 msgid Channel {channel} is not configured as source!
 msgstr Kanál {channel} není nastaven jako zdroj!
 
 msgid Channel {channel} was unset as source!
-msgstr Kanál {channel} bol odstránený ako zdroj!
+msgstr Kanál {channel} byl odstraněný jako zdroj!
+
+msgid Channel {channel} is not Starboard source channel!
+msgstr Kanál {channel} není zdrojový kanál pro Starboard!
+
+msgid History for channel {channel} checked, processed {limit} messages.
+msgstr Historie kanálu {channel} zkontrolována, zpracováno {limit} zpráv.
 
 msgid Not implemented yet.
 msgstr

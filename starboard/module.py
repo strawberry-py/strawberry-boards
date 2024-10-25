@@ -177,7 +177,7 @@ class Starboard(commands.Cog):
             ephemeral=True,
         )
 
-        guild_log.info(
+        await guild_log.info(
             itx.user,
             itx.channel,
             f"Channel {source.name} added as source for Starboard channel {starboard.name} with limit {limit}.",
@@ -238,7 +238,7 @@ class Starboard(commands.Cog):
         self.source_channels.remove(sb_channel.source_channel_id)
         self.starboard_channels.remove(sb_channel.starboard_channel_id)
 
-        guild_log.info(
+        await guild_log.info(
             itx.user,
             itx.channel,
             f"Channel {source.name if source else source_id} removed as source from Starboard.",
@@ -411,7 +411,7 @@ class Starboard(commands.Cog):
                 channel_id=sb_db_channel.starboard_channel_id, message=message
             )
 
-            guild_log.info(
+            await guild_log.info(
                 None,
                 message.channel,
                 f"Message {message.jump_url} reached limit {sb_db_channel} reactions. Reposted to {sb_db_channel.starboard_channel_id}.",
@@ -424,7 +424,7 @@ class Starboard(commands.Cog):
         sb_channel: discord.TextChannel = self.bot.get_channel(channel_id)
 
         if sb_channel is None:
-            guild_log.warning(
+            await guild_log.warning(
                 None,
                 None,
                 f"Starboard can't find channel {channel_id} set up for channel {channel_id}!",
@@ -507,7 +507,7 @@ class Starboard(commands.Cog):
         try:
             messages.append(await channel.send(embed=embed, file=embed_image))
         except Exception as e:
-            guild_log.error(
+            await guild_log.error(
                 None,
                 None,
                 f"Starboard can't send message to {channel.id}!",
@@ -540,7 +540,7 @@ class Starboard(commands.Cog):
             try:
                 message = await channel.send(content=sec_mess_text, files=files[:10])
             except Exception as e:
-                guild_log.error(
+                await guild_log.error(
                     None,
                     None,
                     f"Starboard can't send secondary message to {channel.id}!",

@@ -916,14 +916,18 @@ class Karma(commands.Cog):
         return ("large", 180, 15)
 
     @staticmethod
-    def get_emoji_value(guild_id: int, emoji: discord.PartialEmoji) -> int:
+    def get_emoji_value(
+        guild_id: int, emoji: Union[discord.PartialEmoji, discord.Emoji, str]
+    ) -> int:
         """Get's emoji value from DB (default 0)
 
         :param guild_id: ID of the guild
         :param emoji: Partial Emoji to get the karma value.
 
         :return: Emoji karma value"""
-        if emoji.is_custom_emoji():
+        if isinstance(emoji, str):
+            emoji = UnicodeEmoji.get(guild_id, emoji)
+        elif emoji.is_custom_emoji():
             emoji = DiscordEmoji.get(guild_id, emoji.id)
         else:
             emoji = UnicodeEmoji.get(guild_id, emoji.name)

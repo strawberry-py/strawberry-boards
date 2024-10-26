@@ -925,7 +925,7 @@ class Karma(commands.Cog):
         :param emoji: Partial Emoji to get the karma value.
 
         :return: Emoji karma value"""
-        
+
         if isinstance(emoji, str):
             emoji = UnicodeEmoji.get(guild_id, emoji)
         else:

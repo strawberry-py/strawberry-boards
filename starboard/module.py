@@ -319,7 +319,7 @@ class Starboard(commands.Cog):
     @app_commands.guild_only()
     @check.acl2(check.ACLevel.MEMBER)
     @starboard.command(name="stats", description="Display user's Starboard stats.")
-    async def starboard_info(
+    async def starboard_stats(
         self, itx: discord.Interaction, member: discord.User = None
     ):
         await itx.response.defer(thinking=True)

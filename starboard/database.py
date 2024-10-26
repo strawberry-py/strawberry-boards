@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import BigInteger, Integer, UniqueConstraint, or_
+from sqlalchemy import BigInteger, Integer, UniqueConstraint, func, or_
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pie.database import database, session
@@ -74,6 +74,51 @@ class StarboardMessage(database.base):
 
         session.merge(sb_message)
         session.commit()
+
+    @staticmethod
+    def get_all_authors_count(
+        guild_id: int, starboard_channel_id: int = None
+    ) -> list[tuple[int, int]]:
+        """Gets the list of authors and the count of their starboarded messages
+        :param guild_id: ID of the guild
+        :param starboard_channel_id: (Optional) ID of the starboard channel
+
+        :return: List of tuples in form of (author_id, count)"""
+        query = session.query(
+            StarboardMessage.author_id,
+            func.count(StarboardMessage.author_id).label("count"),
+        ).filter(StarboardMessage.guild_id == guild_id)
+
+        if starboard_channel_id:
+            query.filter_by(starboard_channel_id=starboard_channel_id)
+
+        query = query.group_by(StarboardMessage.author_id).order_by(
+            func.count(StarboardMessage.author_id).desc()
+        )
+
+        return query.all()
+
+    @staticmethod
+    def get_author_stats(guild_id: int, author_id: int) -> list[tuple[int, int]]:
+        """Gets the list of authors starboarded messages for each starboard channel
+        :param guild_id: ID of the guild
+        :param author_id: ID of the author
+
+        :return: List of tuples in form of (starboard_channel_id, count)"""
+        query = (
+            session.query(
+                StarboardMessage.starboard_channel_id,
+                func.count(StarboardMessage.starboard_channel_id).label("count"),
+            )
+            .filter(StarboardMessage.guild_id == guild_id)
+            .filter(StarboardMessage.author_id == author_id)
+        )
+
+        query = query.group_by(StarboardMessage.starboard_channel_id).order_by(
+            func.count(StarboardMessage.starboard_channel_id).desc()
+        )
+
+        return query.all()
 
 
 class StarboardChannel(database.base):

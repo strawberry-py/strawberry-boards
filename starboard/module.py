@@ -322,12 +322,56 @@ class Starboard(commands.Cog):
     async def starboard_info(
         self, itx: discord.Interaction, member: discord.User = None
     ):
-        await itx.response.send_message(
-            content=_(itx, "Not implemented yet."), ephemeral=True
+        await itx.response.defer(thinking=True)
+        member: Union[discord.User, discord.Member] = member if member else itx.user
+        db_stats: list[tuple[int, int]] = StarboardMessage.get_author_stats(
+            guild_id=itx.guild.id, author_id=member.id
         )
-        # TODO
+
+        if not db_stats:
+            await (await itx.original_response()).edit(
+                content=_(
+                    itx,
+                    "No stats found for {member}",
+                ).format(member=member.display_name)
+            )
+            return
+
+        embed: discord.Embed = await self._get_user_embed(itx, member, db_stats)
+
+        await (await itx.original_response()).edit(embed=embed)
 
     # Helper functions
+
+    async def _get_user_embed(
+        self,
+        itx: discord.Interaction,
+        member: Union[discord.User, discord.Member],
+        stats: list[tuple[int, int]],
+    ) -> discord.Embed:
+        embed = utils.discord.create_embed(
+            author=itx.user,
+            title=_(itx, "Starboard stats for {name}").format(name=member.display_name),
+        )
+
+        total: int = 0
+        lines = []
+
+        for channel_id, count in stats:
+            if len(lines) == 10:
+                lines.append("...")
+                break
+            channel: discord.TextChannel = self.bot.get_channel(channel_id)
+            channel_mention: str = channel.mention if channel else f"({channel_id})"
+            total += count
+
+            line = f"{channel_mention} … `{count:>6}`"
+            lines.append(line)
+
+        embed.add_field(name=_(itx, "Starboard channels"), value="\n".join(lines), inline=False)
+        embed.add_field(name=_(itx, "Total starboarded messages"), value=total, inline=False)
+
+        return embed
 
     async def _proxy_karma(self, reaction: discord.RawReactionActionEvent, added: bool):
         messages: StarboardMessage = StarboardMessage.get_all(

@@ -330,3 +330,15 @@ msgstr Historie kanálu {channel} zkontrolována, zpracováno {limit} zpráv.
 
 msgid Not implemented yet.
 msgstr
+
+msgid No stats found for {member}
+msgstr Žádné statistiky uživatele {member} nenalezeny.
+
+msgid Starboard stats for {name}
+msgstr Starboard statistiky pro {name}
+
+msgid Starboard channels
+msgstr Starboard kanály
+
+msgid Total starboarded messages
+msgstr Celkový počet starboard zpráv

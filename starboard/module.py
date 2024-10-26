@@ -309,12 +309,47 @@ class Starboard(commands.Cog):
         name="leaderboard", description="Lists the most starboarded users."
     )
     async def starboard_leaderboard(
-        self, itx: discord.Interaction, source: discord.TextChannel = None
+        self, itx: discord.Interaction, starboard: discord.TextChannel = None
     ):
-        await itx.response.send_message(
-            content=_(itx, "Not implemented yet."), ephemeral=True
+        await itx.response.defer(thinking=True)
+        all_count: list[tuple[int, int]] = StarboardMessage.get_all_authors_count(
+            guild_id=itx.guild.id,
+            starboard_channel_id=starboard.id if starboard else None,
         )
-        # TODO
+
+        if not all_count:
+            if starboard:
+                await (await itx.original_response()).edit(
+                    content=_(
+                        itx, "No messages in starboard channel {channel}."
+                    ).format(channel=starboard.mention)
+                )
+            else:
+                await (await itx.original_response()).edit(
+                    content=_(itx, "No messages in all starboard.")
+                )
+            return
+
+        author_total: int = StarboardMessage.get_author_total(
+            guild_id=itx.guild.id, author_id=itx.user.id
+        )
+        items_per_page = 10
+        count_chunks: list[list[tuple[int, int]]] = [
+            all_count[i : i + items_per_page]
+            for i in range(0, len(all_count), items_per_page)
+        ]
+
+        pages = []
+        for i in range(0, len(count_chunks)):
+            chunk: list[tuple[int, int]] = count_chunks[i]
+            page_range = items_per_page * (i + 1)
+            title = _(itx, "Starboard leaderboard")
+            title += (" - " + starboard.name) if starboard else ""
+            embed = self._create_page_embed(itx, chunk, title, page_range, author_total)
+
+            pages.append(embed)
+        scrollable: utils.ScrollableEmbed = utils.ScrollableEmbed(itx, pages)
+        await scrollable.scroll()
 
     @app_commands.guild_only()
     @check.acl2(check.ACLevel.MEMBER)
@@ -664,6 +699,38 @@ class Starboard(commands.Cog):
                     exception=e,
                 )
             return message
+
+    def _create_page_embed(
+        self,
+        itx: discord.Interaction,
+        chunk: list[tuple[int, int]],
+        title: str,
+        range: int,
+        author_total: int,
+    ) -> discord.Embed:
+        embed = utils.discord.create_embed(author=itx.user, title=title)
+        rows = []
+        found = False
+        for user_id, count in chunk:
+            user: Optional[discord.User] = self.bot.get_user(user_id)
+            user_name: str = (
+                utils.text.sanitise(user.display_name, limit=32)
+                if user
+                else _(itx, "Unknown member")
+            )
+            if user_id == itx.user.id:
+                user_name = f"**{user_name}**"
+                found = True
+            rows.append(f"`{count}` … {user_name}")
+
+        embed.add_field(
+            name=_(itx, "Top {limit}").format(limit=range),
+            value="\n".join(rows),
+            inline=False,
+        )
+        if not found:
+            embed.add_field(name=_(itx, "Your score"), value=author_total, inline=False)
+        return embed
 
     @staticmethod
     def _get_title(reactions: list[discord.Reaction]) -> str:

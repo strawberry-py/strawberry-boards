@@ -90,7 +90,7 @@ class StarboardMessage(database.base):
         ).filter(StarboardMessage.guild_id == guild_id)
 
         if starboard_channel_id:
-            query.filter_by(starboard_channel_id=starboard_channel_id)
+            query = query.filter_by(starboard_channel_id=starboard_channel_id)
 
         query = query.group_by(StarboardMessage.author_id).order_by(
             func.count(StarboardMessage.author_id).desc()
@@ -112,13 +112,32 @@ class StarboardMessage(database.base):
             )
             .filter(StarboardMessage.guild_id == guild_id)
             .filter(StarboardMessage.author_id == author_id)
-        )
-
-        query = query.group_by(StarboardMessage.starboard_channel_id).order_by(
-            func.count(StarboardMessage.starboard_channel_id).desc()
+            .group_by(StarboardMessage.starboard_channel_id)
+            .order_by(func.count(StarboardMessage.starboard_channel_id).desc())
         )
 
         return query.all()
+
+    @staticmethod
+    def get_author_total(guild_id: int, author_id: int) -> int:
+        """Get total count of author's appearances in Starboard
+        :param guild_id: ID of the guild
+        :param author_id: ID of the author
+
+        :return: Count of author's starboarded messages"""
+        query = (
+            session.query(
+                func.count(StarboardMessage.author_id),
+            )
+            .filter(StarboardMessage.guild_id == guild_id)
+            .filter(StarboardMessage.author_id == author_id)
+        )
+
+        query = query.group_by(StarboardMessage.author_id).order_by(
+            func.count(StarboardMessage.starboard_channel_id).desc()
+        )
+
+        return query.scalar()
 
 
 class StarboardChannel(database.base):

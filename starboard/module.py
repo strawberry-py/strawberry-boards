@@ -221,6 +221,7 @@ class Starboard(commands.Cog):
                     ),
                     ephemeral=True,
                 )
+                return
 
         sb_channel: StarboardChannel = StarboardChannel.get(
             guild_id=itx.guild_id, source_channel_id=source_id

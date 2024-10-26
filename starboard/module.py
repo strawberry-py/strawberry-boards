@@ -368,10 +368,76 @@ class Starboard(commands.Cog):
             line = f"{channel_mention} … `{count:>6}`"
             lines.append(line)
 
-        embed.add_field(name=_(itx, "Starboard channels"), value="\n".join(lines), inline=False)
-        embed.add_field(name=_(itx, "Total starboarded messages"), value=total, inline=False)
+        embed.add_field(
+            name=_(itx, "Starboard channels"), value="\n".join(lines), inline=False
+        )
+        embed.add_field(
+            name=_(itx, "Total starboarded messages"), value=total, inline=False
+        )
 
         return embed
+
+    async def _get_related_messages(
+        self, sb_message: StarboardMessage
+    ) -> list[discord.Message]:
+        sb_messages: list[StarboardMessage] = StarboardMessage.get_all(
+            guild_id=sb_message.guild_id, source_message_id=sb_message.source_message_id
+        )
+
+        dc_messages: list[discord.Message] = []
+        try:
+            source_dc_message: discord.Message = await utils.discord.get_message(
+                self.bot,
+                guild_or_user_id=sb_message.guild_id,
+                channel_id=sb_message.source_channel_id,
+                message_id=sb_message.source_message_id,
+            )
+            dc_messages.append(source_dc_message)
+        except Exception as ex:
+            await guild_log.error(
+                None,
+                None,
+                f"Could not load original message {sb_message.source_message_id} to prevent karma duplication.",
+                exception=ex,
+            )
+
+        for message in sb_messages:
+            if message.idx == sb_message.idx:
+                continue
+            try:
+                dc_message: discord.Message = await utils.discord.get_message(
+                    self.bot,
+                    guild_or_user_id=message.guild_id,
+                    channel_id=message.starboard_channel_id,
+                    message_id=message.starboard_message_id,
+                )
+                dc_messages.append(dc_message)
+            except Exception as ex:
+                await guild_log.error(
+                    None,
+                    None,
+                    f"Could not load starboard message {sb_message.starboard_message_id} to prevent karma duplication.",
+                    exception=ex,
+                )
+                continue
+
+        return dc_messages
+
+    async def _check_duplicate(
+        self, reaction: discord.RawReactionActionEvent, sb_message: StarboardMessage
+    ) -> bool:
+        dc_messages: list[discord.Message] = await self._get_related_messages(
+            sb_message
+        )
+
+        for dc_message in dc_messages:
+            for check_reaction in dc_message.reactions:
+                if reaction.emoji == check_reaction.emoji:
+                    check_users = [user.id async for user in check_reaction.users()]
+                    if reaction.user_id in check_users:
+                        return True
+
+        return False
 
     async def _proxy_karma(self, reaction: discord.RawReactionActionEvent, added: bool):
         messages: StarboardMessage = StarboardMessage.get_all(
@@ -380,6 +446,10 @@ class Starboard(commands.Cog):
         if not messages:
             return
         message: StarboardMessage = messages[0]
+
+        duplicate = await self._check_duplicate(reaction, message)
+        if duplicate:
+            return
 
         karma: Karma = self.bot.get_cog("Karma")
         if not karma:
@@ -461,7 +531,7 @@ class Starboard(commands.Cog):
             await guild_log.info(
                 None,
                 message.channel,
-                f"Message {message.jump_url} reached limit {sb_db_channel} reactions. Reposted to {sb_db_channel.starboard_channel_id}.",
+                f"Message {message.jump_url} reached limit {sb_db_channel.limit} reactions. Reposted to {sb_db_channel.starboard_channel_id}.",
             )
             break
 

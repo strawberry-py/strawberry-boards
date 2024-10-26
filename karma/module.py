@@ -927,10 +927,19 @@ class Karma(commands.Cog):
         :return: Emoji karma value"""
 
         if isinstance(emoji, str):
-            emoji = UnicodeEmoji.get(guild_id, emoji)
+            db_emoji = UnicodeEmoji.get(guild_id, emoji)
+        elif isinstance(emoji, discord.PartialEmoji):
+            if emoji.is_custom_emoji():
+                db_emoji = DiscordEmoji.get(guild_id, emoji.id)
+            else:
+                db_emoji = UnicodeEmoji.get(guild_id, emoji.name)
         else:
-            emoji = DiscordEmoji.get(guild_id, emoji.id)
-        emoji_value: int = getattr(emoji, "value", 0)
+            if getattr(emoji, "id", None) is not None:
+                db_emoji = DiscordEmoji.get(guild_id, emoji.id)
+            else:
+                db_emoji = UnicodeEmoji.get(guild_id, emoji.name)
+        print(db_emoji)
+        emoji_value: int = getattr(db_emoji, "value", 0)
 
         return emoji_value
 

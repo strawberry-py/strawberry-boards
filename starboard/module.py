@@ -377,6 +377,63 @@ class Starboard(commands.Cog):
 
         return embed
 
+    async def _proxy_karma(self, reaction: discord.RawReactionActionEvent, added: bool):
+        messages: StarboardMessage = StarboardMessage.get_all(
+            guild_id=reaction.guild_id, starboard_message_id=reaction.message_id
+        )
+        if not messages:
+            return
+        message: StarboardMessage = messages[0]
+
+        duplicate = await self._check_duplicate(reaction, message)
+        if duplicate:
+            return
+
+        karma: Karma = self.bot.get_cog("Karma")
+        if not karma:
+            return
+
+        if message.author_id == reaction.user_id:
+            return
+
+        emoji_value = karma.get_emoji_value(
+            guild_id=reaction.guild_id, emoji=reaction.emoji
+        )
+
+        if emoji_value == 0:
+            return
+
+        if added:
+            karma.reaction_added(
+                guild_id=reaction.guild_id,
+                msg_author_id=message.author_id,
+                react_author_id=reaction.user_id,
+                emoji_value=emoji_value,
+            )
+        else:
+            karma.reaction_removed(
+                guild_id=reaction.guild_id,
+                msg_author_id=message.author_id,
+                react_author_id=reaction.user_id,
+                emoji_value=emoji_value,
+            )
+
+    async def _check_duplicate(
+        self, reaction: discord.RawReactionActionEvent, sb_message: StarboardMessage
+    ) -> bool:
+        dc_messages: list[discord.Message] = await self._get_related_messages(
+            sb_message
+        )
+
+        for dc_message in dc_messages:
+            for check_reaction in dc_message.reactions:
+                if reaction.emoji == check_reaction.emoji:
+                    check_users = [user.id async for user in check_reaction.users()]
+                    if reaction.user_id in check_users:
+                        return True
+
+        return False
+
     async def _get_related_messages(
         self, sb_message: StarboardMessage
     ) -> list[discord.Message]:
@@ -422,63 +479,6 @@ class Starboard(commands.Cog):
                 continue
 
         return dc_messages
-
-    async def _check_duplicate(
-        self, reaction: discord.RawReactionActionEvent, sb_message: StarboardMessage
-    ) -> bool:
-        dc_messages: list[discord.Message] = await self._get_related_messages(
-            sb_message
-        )
-
-        for dc_message in dc_messages:
-            for check_reaction in dc_message.reactions:
-                if reaction.emoji == check_reaction.emoji:
-                    check_users = [user.id async for user in check_reaction.users()]
-                    if reaction.user_id in check_users:
-                        return True
-
-        return False
-
-    async def _proxy_karma(self, reaction: discord.RawReactionActionEvent, added: bool):
-        messages: StarboardMessage = StarboardMessage.get_all(
-            guild_id=reaction.guild_id, starboard_message_id=reaction.message_id
-        )
-        if not messages:
-            return
-        message: StarboardMessage = messages[0]
-
-        duplicate = await self._check_duplicate(reaction, message)
-        if duplicate:
-            return
-
-        karma: Karma = self.bot.get_cog("Karma")
-        if not karma:
-            return
-
-        if message.author_id == reaction.user_id:
-            return
-
-        emoji_value = karma.get_emoji_value(
-            guild_id=reaction.guild_id, emoji=reaction.emoji
-        )
-
-        if emoji_value == 0:
-            return
-
-        if added:
-            karma.reaction_added(
-                guild_id=reaction.guild_id,
-                msg_author_id=message.author_id,
-                react_author_id=reaction.user_id,
-                emoji_value=emoji_value,
-            )
-        else:
-            karma.reaction_removed(
-                guild_id=reaction.guild_id,
-                msg_author_id=message.author_id,
-                react_author_id=reaction.user_id,
-                emoji_value=emoji_value,
-            )
 
     async def _process_reaction(self, reaction: discord.RawReactionActionEvent):
         async with self._reaction_lock:

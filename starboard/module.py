@@ -603,7 +603,16 @@ class Starboard(commands.Cog):
         embed_image = None
         secondary_attachments = []
         for attachment in attachments:
-            attachment_file = await attachment.to_file()
+            try:
+                attachment_file = await attachment.to_file()
+            except Exception as ex:
+                await guild_log.debug(
+                    None,
+                    None,
+                    f"Error loading attachment {attachment.url}.",
+                    exception=ex,
+                )
+                continue
 
             if (
                 attachment.content_type is not None

@@ -328,8 +328,14 @@ msgstr Kanál {channel} nie je zdrojový kanál pre Starboard!
 msgid History for channel {channel} checked, processed {limit} messages.
 msgstr História kanálu {channel} skontrolovaná, spracované {limit} správ.
 
-msgid Not implemented yet.
-msgstr
+msgid No messages in starboard channel {channel}.
+msgstr Žiadne správy v starboard kanáli {channel}.
+
+msgid No messages in all starboard.
+msgstr Žiadne správy vo všetkých starboard kanáloch.
+
+msgid Starboard leaderboard
+msgstr Starboard (najlepší)
 
 msgid No stats found for {member}
 msgstr Žiadne štatistiky používateľa {member} nenájdené.

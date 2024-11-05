@@ -2,7 +2,7 @@ import asyncio
 import os
 import re
 from types import SimpleNamespace
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 from urllib.parse import urlparse
 
 import discord
@@ -12,7 +12,8 @@ from discord.ext import commands
 from pie import check, i18n, utils
 from pie.bot import Strawberry, logger
 
-from ..karma.module import Karma
+if TYPE_CHECKING:
+    from ..karma.module import Karma
 from .database import StarboardChannel, StarboardMessage
 
 ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"]
@@ -596,10 +597,8 @@ class Starboard(commands.Cog):
             if m_reaction.count < sb_db_channel.limit:
                 continue
 
-            if (
-                self.bot.get_cog("Karma")
-                and Karma.get_emoji_value(message.guild.id, m_reaction.emoji) < 1
-            ):
+            karma: Karma = self.bot.get_cog("Karma")
+            if karma and karma.get_emoji_value(message.guild.id, m_reaction.emoji) < 1:
                 continue  # If Karma is loaded, count only reactions with positive Karma
 
             await self._repost_message(

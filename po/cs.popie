@@ -304,9 +304,6 @@ msgstr Limit musí být větší než 0!
 msgid Source channel is already in use as source or starboard!
 msgstr Zdrojový kanál je již použit jako zdroj nebo starboard!
 
-msgid Starboard channel is already in use as source!
-msgstr Starboard kanál je již použit jako zdroj!
-
 msgid Starboard configured to repost messages from {source_channel} to {starboard_channel} when reaching {limit} reactions.
 msgstr Starboard nastaven aby posílal zprávy z {source_channel} to {starboard_channel} po dosažení {limit} reakcí.
 

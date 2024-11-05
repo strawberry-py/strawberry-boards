@@ -142,18 +142,17 @@ class Starboard(commands.Cog):
             )
             return
 
-        if not StarboardChannel.check_unique(itx.guild.id, source.id):
+        channel = StarboardChannel.get(
+            guild_id=itx.guild.id,
+            source_channel_id=source.id,
+            starboard_channel_id=starboard.id,
+        )
+
+        if not channel and not StarboardChannel.check_unique(itx.guild.id, source.id):
             await itx.response.send_message(
                 content=_(
                     itx, "Source channel is already in use as source or starboard!"
                 ),
-                ephemeral=True,
-            )
-            return
-
-        if StarboardChannel.get(guild_id=itx.guild.id, source_channel_id=starboard.id):
-            await itx.response.send_message(
-                content=_(itx, "Starboard channel is already in use as source!"),
                 ephemeral=True,
             )
             return
@@ -165,8 +164,10 @@ class Starboard(commands.Cog):
             limit=limit,
         )
 
-        self.source_channels.append(source.id)
-        self.starboard_channels.append(starboard.id)
+        if source.id not in self.source_channels:
+            self.source_channels.append(source.id)
+        if starboard.id not in self.starboard_channels:
+            self.starboard_channels.append(starboard.id)
 
         await itx.response.send_message(
             content=_(

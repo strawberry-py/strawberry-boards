@@ -439,12 +439,12 @@ class Starboard(commands.Cog):
             return
         message: StarboardMessage = messages[0]
 
-        duplicate = await self._check_duplicate(reaction, message)
-        if duplicate:
-            return
-
         karma: Karma = self.bot.get_cog("Karma")
         if not karma:
+            return
+
+        duplicate = await self._check_duplicate(reaction, message)
+        if duplicate:
             return
 
         if message.author_id == reaction.user_id:

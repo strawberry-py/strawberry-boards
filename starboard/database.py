@@ -170,17 +170,22 @@ class StarboardChannel(database.base):
     def get(
         guild_id: int,
         source_channel_id: int = None,
+        starboard_channel_id: int = None,
     ) -> Optional[StarboardChannel]:
         """Gets the starboard channel.
+        Beware that if multiple channels are found, returns None instead
 
         :param guild_id: Discord ID of the guild.
         :param source_channel_id: Optional source channel Discord ID
+        :param starboard_channel_id: Optional source channel Discord ID
 
-        :returns: StarboardChannel if found, None otherwise"""
+        :returns: StarboardChannel if one found, None otherwise"""
         query = session.query(StarboardChannel)
 
         if source_channel_id:
             query = query.filter_by(source_channel_id=source_channel_id)
+        if starboard_channel_id:
+            query = query.filter_by(starboard_channel_id=starboard_channel_id)
 
         return query.one_or_none()
 

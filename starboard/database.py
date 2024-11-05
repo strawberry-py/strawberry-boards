@@ -174,10 +174,10 @@ class StarboardChannel(database.base):
         source_channel_id: int = None,
     ) -> Optional[StarboardChannel]:
         """Gets the starboard channel.
-        
+
         :param guild_id: Discord ID of the guild.
         :param source_channel_id: Optional source channel Discord ID
-        
+
         :returns: StarboardChannel if found, None otherwise"""
         query = session.query(StarboardChannel)
 

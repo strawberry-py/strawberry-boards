@@ -42,10 +42,12 @@ class Starboard(commands.Cog):
         self.bot: Strawberry = bot
         self.starboard_channels = []
         self.source_channels = []
+        # This prevents race conditions
         self._reaction_lock = asyncio.Lock()
         self._reaction_processing = []
 
         for sb_channel in StarboardChannel.get_all():
+            # Caching should be faster than pulling the info from DB all the time
             self.starboard_channels.append(sb_channel.starboard_channel_id)
             self.source_channels.append(sb_channel.source_channel_id)
 
@@ -385,6 +387,14 @@ class Starboard(commands.Cog):
         member: Union[discord.User, discord.Member],
         stats: list[tuple[int, int]],
     ) -> discord.Embed:
+        """Creates user embed based on the stats.
+
+        :param itx: Discord interaction
+        :param member: The member to create embed about
+        :param stats: Tuple of channel ID and number of starboarded messages
+
+        :return: User embed containing user stats
+        """
         embed = utils.discord.create_embed(
             author=itx.user,
             title=_(itx, "Starboard stats for {name}").format(name=member.display_name),
@@ -414,6 +424,14 @@ class Starboard(commands.Cog):
         return embed
 
     async def _proxy_karma(self, reaction: discord.RawReactionActionEvent, added: bool):
+        """Helper function to assign the karma points to the user for the starboarded messages.
+        Checks that Karma module is in use (loaded).
+
+        Does not proxy karma if the same reaction was already used on one of the related messages.
+
+        :param reaction: Discord reaction to proxy.
+        :param added: True if added, False if removed.
+        """
         messages: StarboardMessage = StarboardMessage.get_all(
             guild_id=reaction.guild_id, starboard_message_id=reaction.message_id
         )
@@ -457,6 +475,14 @@ class Starboard(commands.Cog):
     async def _check_duplicate(
         self, reaction: discord.RawReactionActionEvent, sb_message: StarboardMessage
     ) -> bool:
+        """Helper function to check for reaction duplicates in related messages.
+        This makes sure that Karma is assigned only once per unique reaction.
+
+        :param reaction: Discord reaction.
+        :param sb_message: Starboard message used for the check.
+
+        :returns: True if reaction was already used, False otherwise
+        """
         dc_messages: list[discord.Message] = await self._get_related_messages(
             sb_message
         )
@@ -473,6 +499,12 @@ class Starboard(commands.Cog):
     async def _get_related_messages(
         self, sb_message: StarboardMessage
     ) -> list[discord.Message]:
+        """Helper function to get Discord messages related to Starboard message.
+
+        :param sb_message: Starboard message to use for lookup.
+
+        :returns: List of Discord messages related to the Starboard message.
+        """
         sb_messages: list[StarboardMessage] = StarboardMessage.get_all(
             guild_id=sb_message.guild_id, source_message_id=sb_message.source_message_id
         )
@@ -496,7 +528,7 @@ class Starboard(commands.Cog):
 
         for message in sb_messages:
             if message.idx == sb_message.idx:
-                continue
+                continue  # Ignore source message
             try:
                 dc_message: discord.Message = await utils.discord.get_message(
                     self.bot,
@@ -517,6 +549,12 @@ class Starboard(commands.Cog):
         return dc_messages
 
     async def _process_reaction(self, reaction: discord.RawReactionActionEvent):
+        """Helper function to perform checks and repost message if limit is reached.
+
+        Uses asyncio.lock() and _reaction_processing to prevent race conditions (reposting message twice).
+
+        :param reaction: Discord reaction to process.
+        """
         async with self._reaction_lock:
             if reaction.message_id in self._reaction_processing:
                 return
@@ -558,7 +596,7 @@ class Starboard(commands.Cog):
                 self.bot.get_cog("Karma")
                 and Karma.get_emoji_value(message.guild.id, m_reaction.emoji) < 1
             ):
-                continue
+                continue  # If Karma is loaded, count only reactions with positive Karma
 
             await self._repost_message(
                 channel_id=sb_db_channel.starboard_channel_id, message=message
@@ -574,8 +612,12 @@ class Starboard(commands.Cog):
         self._reaction_processing.remove(message.id)
 
     async def _repost_message(self, channel_id: int, message: discord.Message):
-        sb_channel: discord.TextChannel = self.bot.get_channel(channel_id)
+        """Performs repost of the message to Starboard channel.
 
+        :param channel_id: ID of Starboard channel
+        :param message: Source message to be reposted.
+        """
+        sb_channel: discord.TextChannel = self.bot.get_channel(channel_id)
         if sb_channel is None:
             await guild_log.warning(
                 None,
@@ -599,7 +641,14 @@ class Starboard(commands.Cog):
 
     async def _process_attachments(
         self, attachments: list[discord.Attachment], msg_content: str
-    ) -> tuple[Optional[Union[discord.File, str]], Union[str, discord.File]]:
+    ) -> tuple[Optional[Union[discord.File, str]], list[Union[str, discord.File]]]:
+        """Processes attachements for the repost.
+
+        :param attachments: List of original message attachments
+        :param msg_content: Text content of the original message
+
+        :returns: Tuple with (optional) embed image and list of other attachments.
+        """
         embed_image = None
         secondary_attachments = []
         for attachment in attachments:
@@ -637,6 +686,13 @@ class Starboard(commands.Cog):
     async def _send_messages(
         self, channel: discord.TextChannel, message: discord.Message
     ) -> list[discord.Message]:
+        """Helper function to re-send the Starboard message based on the original.
+
+        :param channel: Discord channel used as destination.
+        :param message: Original (source) message.
+
+        :returns: List of messages that were re-sent (empty if failed)
+        """
         embed = utils.discord.create_embed(
             author=message.author,
             color=discord.Colour.yellow(),
@@ -690,6 +746,15 @@ class Starboard(commands.Cog):
         channel: discord.TextChannel,
         sec_attachments: list[Union[discord.File, str]],
     ) -> Optional[discord.Message]:
+        """Helper function to send secondary starboard message.
+
+        This is used for any attachment that can't be sent in embed (videos, URLs).
+
+        :param channel: Discord channel used as destination.
+        :param sec_attachments: List of attachments to be reposted.
+
+        :returns: Discrod message if sent, else None
+        """
         if len(sec_attachments) > 0:
             files = [file for file in sec_attachments if isinstance(file, discord.File)]
             urls = [url for url in sec_attachments if isinstance(url, str)]
@@ -718,6 +783,16 @@ class Starboard(commands.Cog):
         range: int,
         author_total: int,
     ) -> discord.Embed:
+        """Helper function to prepare page for Leaderboard.
+
+        :param itx: Discord interaction for translation purposes.
+        :param chunk: List of tuple containing user ID and number of starboarded messages.
+        :param title: Title of the page.
+        :param range: Range used for header.
+        :param author_total: Total starboarded messages of the author for the Your score.
+
+        :returns: Page as Discord embed
+        """
         embed = utils.discord.create_embed(author=itx.user, title=title)
         rows = []
         found = False
@@ -744,6 +819,12 @@ class Starboard(commands.Cog):
 
     @staticmethod
     def _get_title(reactions: list[discord.Reaction]) -> str:
+        """Helper function to prepare title from reaction list.
+
+        :param reactions: List of reactions
+
+        :returns: Formatted title for the repost embed.
+        """
         title_parts: list[str] = [
             f"{reaction.emoji}{reaction.count}"
             for reaction in reactions

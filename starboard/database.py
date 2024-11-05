@@ -38,6 +38,17 @@ class StarboardMessage(database.base):
         starboard_channel_id: int = None,
         starboard_message_id: int = None,
     ) -> list[StarboardChannel]:
+        """Universal function to search for Starboard channels based on parameters.
+
+        :param guild_id: Discord ID of the guild.
+        :param author_id: Discord ID of the original message author.
+        :param source_channel_id: Discord ID of the source channel.
+        :param source_message_id: Discord ID of the source message.
+        :param starboard_channel_id: Discord ID of the Starboard channel.
+        :param starboard_message_id: Discord ID of the Starboard message.
+
+        :returns: list of StarboardChannels found (might be empty)
+        """
 
         query = session.query(StarboardMessage).filter_by(guild_id=guild_id)
 
@@ -62,7 +73,16 @@ class StarboardMessage(database.base):
         source_message_id: int,
         starboard_channel_id: int,
         starboard_message_id: int,
-    ) -> StarboardChannel:
+    ):
+        """Add starboard message.
+
+        :param guild_id: Discord ID of the guild.
+        :param author_id: Discord ID of the original message author.
+        :param source_channel_id: Discord ID of the source channel.
+        :param source_message_id: Discord ID of the source message.
+        :param starboard_channel_id: Discord ID of the Starboard channel.
+        :param starboard_message_id: Discord ID of the Starboard message.
+        """
         sb_message = StarboardMessage(
             guild_id=guild_id,
             author_id=author_id,
@@ -108,7 +128,7 @@ class StarboardMessage(database.base):
         query = (
             session.query(
                 StarboardMessage.starboard_channel_id,
-                func.count(StarboardMessage.starboard_channel_id).label("count"),
+                func.count(distinct(StarboardMessage.source_message_id)).label("count"),
             )
             .filter(StarboardMessage.guild_id == guild_id)
             .filter(StarboardMessage.author_id == author_id)
@@ -153,6 +173,12 @@ class StarboardChannel(database.base):
         guild_id: int,
         source_channel_id: int = None,
     ) -> Optional[StarboardChannel]:
+        """Gets the starboard channel.
+        
+        :param guild_id: Discord ID of the guild.
+        :param source_channel_id: Optional source channel Discord ID
+        
+        :returns: StarboardChannel if found, None otherwise"""
         query = session.query(StarboardChannel)
 
         if source_channel_id:
@@ -161,6 +187,13 @@ class StarboardChannel(database.base):
         return query.one_or_none()
 
     def check_unique(guild_id: int, channel_id: int) -> bool:
+        """Checks if channel_id is not in use as source channel or Starboard channel.
+
+        :param guild_id: Discord ID of the guild.
+        :param channel_id: Discord ID of the channel.
+
+        :returns: True if channel is not used, False otherwise
+        """
         query = (
             session.query(StarboardChannel.idx)
             .filter_by(guild_id=guild_id)
@@ -176,6 +209,13 @@ class StarboardChannel(database.base):
     def get_all(
         guild_id: int = None, starboard_channel_id: int = None
     ) -> list[StarboardChannel]:
+        """Get's all Starboard channels based on the params.
+
+        :param guild_id: Discord ID of the guild.
+        :param starboard_channel_id: Discord ID of the Starboard channel.
+
+        :returns: List of Starboard channels (empty if not found)
+        """
         query = session.query(StarboardChannel)
 
         if guild_id:
@@ -188,7 +228,14 @@ class StarboardChannel(database.base):
 
     def set(
         guild_id: int, source_channel_id: int, starboard_channel_id: int, limit: int
-    ) -> StarboardChannel:
+    ):
+        """Add or update Starboard channel.
+
+        :param guild_id: Discord ID of the guild.
+        :param source_channel_id: Discord ID of the source channel.
+        :param starboard_channel_id: Discord ID of the Starboard channel.
+        :param limit: Minimum reactions for the repost.
+        """
         sb_channel = (
             session.query(StarboardChannel)
             .filter_by(guild_id=guild_id)
@@ -209,5 +256,6 @@ class StarboardChannel(database.base):
         session.commit()
 
     def remove(self):
+        """Removes Starboard channel."""
         session.delete(self)
         session.commit()

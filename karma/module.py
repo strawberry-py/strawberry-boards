@@ -955,7 +955,6 @@ class Karma(commands.Cog):
                 db_emoji = DiscordEmoji.get(guild_id, emoji.id)
             else:
                 db_emoji = UnicodeEmoji.get(guild_id, emoji.name)
-        print(db_emoji)
         emoji_value: int = getattr(db_emoji, "value", 0)
 
         return emoji_value

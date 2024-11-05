@@ -424,7 +424,7 @@ class Starboard(commands.Cog):
         return embed
 
     async def _proxy_karma(self, reaction: discord.RawReactionActionEvent, added: bool):
-        """Helper function to assign the karma points to the user for the starboarded messages.
+        """Helper function to handle karma assignment and prevent karma duplication.
         Checks that Karma module is in use (loaded).
 
         Does not proxy karma if the same reaction was already used on one of the related messages.
@@ -432,9 +432,13 @@ class Starboard(commands.Cog):
         :param reaction: Discord reaction to proxy.
         :param added: True if added, False if removed.
         """
-        messages: StarboardMessage = StarboardMessage.get_all(
+        sb_messages: StarboardMessage = StarboardMessage.get_all(
             guild_id=reaction.guild_id, starboard_message_id=reaction.message_id
         )
+        source_messages: StarboardMessage = StarboardMessage.get_all(
+            guild_id=reaction.guild_id, source_message_id=reaction.message_id
+        )
+        messages = sb_messages + source_messages
         if not messages:
             return
         message: StarboardMessage = messages[0]

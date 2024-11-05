@@ -7,7 +7,10 @@ import discord
 from discord.ext import commands, tasks
 
 from pie import check, i18n, logger, utils
+from pie.bot import Strawberry
 
+from ..starboard.database import StarboardMessage
+from ..starboard.module import Starboard
 from .database import (
     BoardOrder,
     BoardType,
@@ -31,8 +34,8 @@ class Karma(commands.Cog):
     The cache uses (guild_id, user_id) tuple as key.
     """
 
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Strawberry):
+        self.bot: Strawberry = bot
 
         self.value_cache = {}
         self.given_cache = {}
@@ -715,6 +718,18 @@ class Karma(commands.Cog):
         if emoji_value == 0:
             return
 
+        starboard: Starboard = self.bot.get_cog("Starboard")
+        if starboard and reaction.channel_id in starboard.source_channels:
+            source_messages: StarboardMessage = StarboardMessage.get_all(
+                guild_id=reaction.guild_id, source_message_id=reaction.message_id
+            )
+            if source_messages:
+                duplicate = await starboard._check_duplicate(
+                    reaction, source_messages[0]
+                )
+                if duplicate:
+                    return
+
         message: discord.Message = None
         try:
             message = await utils.discord.get_message(
@@ -953,5 +968,5 @@ class Karma(commands.Cog):
         return (guild_id, user_id)
 
 
-async def setup(bot) -> None:
+async def setup(bot: Strawberry) -> None:
     await bot.add_cog(Karma(bot))

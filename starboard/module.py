@@ -432,13 +432,9 @@ class Starboard(commands.Cog):
         :param reaction: Discord reaction to proxy.
         :param added: True if added, False if removed.
         """
-        sb_messages: StarboardMessage = StarboardMessage.get_all(
+        messages: StarboardMessage = StarboardMessage.get_all(
             guild_id=reaction.guild_id, starboard_message_id=reaction.message_id
         )
-        source_messages: StarboardMessage = StarboardMessage.get_all(
-            guild_id=reaction.guild_id, source_message_id=reaction.message_id
-        )
-        messages = sb_messages + source_messages
         if not messages:
             return
         message: StarboardMessage = messages[0]
@@ -477,7 +473,10 @@ class Starboard(commands.Cog):
             )
 
     async def _check_duplicate(
-        self, reaction: discord.RawReactionActionEvent, sb_message: StarboardMessage
+        self,
+        reaction: discord.RawReactionActionEvent,
+        sb_message: StarboardMessage,
+        is_source: bool = False,
     ) -> bool:
         """Helper function to check for reaction duplicates in related messages.
         This makes sure that Karma is assigned only once per unique reaction.
@@ -488,7 +487,7 @@ class Starboard(commands.Cog):
         :returns: True if reaction was already used, False otherwise
         """
         dc_messages: list[discord.Message] = await self._get_related_messages(
-            sb_message
+            sb_message, is_source
         )
 
         for dc_message in dc_messages:
@@ -501,7 +500,7 @@ class Starboard(commands.Cog):
         return False
 
     async def _get_related_messages(
-        self, sb_message: StarboardMessage
+        self, sb_message: StarboardMessage, is_source: bool = False
     ) -> list[discord.Message]:
         """Helper function to get Discord messages related to Starboard message.
 
@@ -514,21 +513,22 @@ class Starboard(commands.Cog):
         )
 
         dc_messages: list[discord.Message] = []
-        try:
-            source_dc_message: discord.Message = await utils.discord.get_message(
-                self.bot,
-                guild_or_user_id=sb_message.guild_id,
-                channel_id=sb_message.source_channel_id,
-                message_id=sb_message.source_message_id,
-            )
-            dc_messages.append(source_dc_message)
-        except Exception as ex:
-            await guild_log.error(
-                None,
-                None,
-                f"Could not load original message {sb_message.source_message_id} to prevent karma duplication.",
-                exception=ex,
-            )
+        if not is_source:
+            try:
+                source_dc_message: discord.Message = await utils.discord.get_message(
+                    self.bot,
+                    guild_or_user_id=sb_message.guild_id,
+                    channel_id=sb_message.source_channel_id,
+                    message_id=sb_message.source_message_id,
+                )
+                dc_messages.append(source_dc_message)
+            except Exception as ex:
+                await guild_log.error(
+                    None,
+                    None,
+                    f"Could not load original message {sb_message.source_message_id} to prevent karma duplication.",
+                    exception=ex,
+                )
 
         for message in sb_messages:
             if message.idx == sb_message.idx:

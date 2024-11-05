@@ -725,7 +725,7 @@ class Karma(commands.Cog):
             )
             if source_messages:
                 duplicate = await starboard._check_duplicate(
-                    reaction, source_messages[0]
+                    reaction, source_messages[0], is_source=True
                 )
                 if duplicate:
                     return

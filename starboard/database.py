@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import BigInteger, Integer, UniqueConstraint, func, or_
+from sqlalchemy import BigInteger, Integer, UniqueConstraint, func, or_, distinct
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pie.database import database, session
@@ -106,7 +106,7 @@ class StarboardMessage(database.base):
         :return: List of tuples in form of (author_id, count)"""
         query = session.query(
             StarboardMessage.author_id,
-            func.count(StarboardMessage.author_id).label("count"),
+            func.count(distinct(StarboardMessage.source_message_id)).label("count"),
         ).filter(StarboardMessage.guild_id == guild_id)
 
         if starboard_channel_id:

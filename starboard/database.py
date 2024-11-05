@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import BigInteger, Integer, UniqueConstraint, func, or_, distinct
+from sqlalchemy import BigInteger, Integer, UniqueConstraint, desc, distinct, func, or_
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pie.database import database, session
@@ -112,9 +112,7 @@ class StarboardMessage(database.base):
         if starboard_channel_id:
             query = query.filter_by(starboard_channel_id=starboard_channel_id)
 
-        query = query.group_by(StarboardMessage.author_id).order_by(
-            func.count(StarboardMessage.author_id).desc()
-        )
+        query = query.group_by(StarboardMessage.author_id).order_by(desc("count"))
 
         return query.all()
 
@@ -133,7 +131,7 @@ class StarboardMessage(database.base):
             .filter(StarboardMessage.guild_id == guild_id)
             .filter(StarboardMessage.author_id == author_id)
             .group_by(StarboardMessage.starboard_channel_id)
-            .order_by(func.count(StarboardMessage.starboard_channel_id).desc())
+            .order_by(desc("count"))
         )
 
         return query.all()
@@ -147,14 +145,14 @@ class StarboardMessage(database.base):
         :return: Count of author's starboarded messages"""
         query = (
             session.query(
-                func.count(StarboardMessage.author_id),
+                func.count(distinct(StarboardMessage.source_message_id)),
             )
             .filter(StarboardMessage.guild_id == guild_id)
             .filter(StarboardMessage.author_id == author_id)
         )
 
         query = query.group_by(StarboardMessage.author_id).order_by(
-            func.count(StarboardMessage.starboard_channel_id).desc()
+            func.count(distinct(StarboardMessage.source_message_id)).desc()
         )
 
         return query.scalar()

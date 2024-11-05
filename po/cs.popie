@@ -279,3 +279,72 @@ msgstr Body (nejvyšší)
 
 msgid Unknown
 msgstr Neznámý
+
+msgid No starboard channel found!
+msgstr Nenalezen žádný starboard kanál!
+
+msgid Source channel ID
+msgstr ID zdrojového kanálu
+
+msgid Source channel
+msgstr Zdrojový kanál
+
+msgid Starboard channel ID
+msgstr ID starboard kanálu
+
+msgid Starboard channel
+msgstr Starboard kanál
+
+msgid Limit
+msgstr Limit
+
+msgid Limit must be higher than 0!
+msgstr Limit musí být větší než 0!
+
+msgid Source channel is already in use as source or starboard!
+msgstr Zdrojový kanál je již použit jako zdroj nebo starboard!
+
+msgid Starboard channel is already in use as source!
+msgstr Starboard kanál je již použit jako zdroj!
+
+msgid Starboard configured to repost messages from {source_channel} to {starboard_channel} when reaching {limit} reactions.
+msgstr Starboard nastaven aby posílal zprávy z {source_channel} to {starboard_channel} po dosažení {limit} reakcí.
+
+msgid Exactly one of the parameters `source` or `source_id` must be specified!
+msgstr Přesně jeden parametr (`source` nebo `source_id`) musí být použit!
+
+msgid Argument `source_id` is not valid channel ID!
+msgstr Argument `source_id` není validní ID kanálu!
+
+msgid Channel {channel} is not configured as source!
+msgstr Kanál {channel} není nastaven jako zdroj!
+
+msgid Channel {channel} was unset as source!
+msgstr Kanál {channel} byl odstraněný jako zdroj!
+
+msgid Channel {channel} is not Starboard source channel!
+msgstr Kanál {channel} není zdrojový kanál pro Starboard!
+
+msgid History for channel {channel} checked, processed {limit} messages.
+msgstr Historie kanálu {channel} zkontrolována, zpracováno {limit} zpráv.
+
+msgid No messages in starboard channel {channel}.
+msgstr Žádné zprávy ve starboard kanálu {channel}.
+
+msgid No messages in all starboard.
+msgstr Žádné zprávy ve všech starboard kanálech.
+
+msgid Starboard leaderboard
+msgstr Starboard (nejlepší)
+
+msgid No stats found for {member}
+msgstr Žádné statistiky uživatele {member} nenalezeny.
+
+msgid Starboard stats for {name}
+msgstr Starboard statistiky pro {name}
+
+msgid Starboard channels
+msgstr Starboard kanály
+
+msgid Total starboarded messages
+msgstr Celkový počet starboard zpráv

@@ -7,7 +7,10 @@ import discord
 from discord.ext import commands, tasks
 
 from pie import check, i18n, logger, utils
+from pie.bot import Strawberry
 
+from ..starboard.database import StarboardMessage
+from ..starboard.module import Starboard
 from .database import (
     BoardOrder,
     BoardType,
@@ -31,8 +34,8 @@ class Karma(commands.Cog):
     The cache uses (guild_id, user_id) tuple as key.
     """
 
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Strawberry):
+        self.bot: Strawberry = bot
 
         self.value_cache = {}
         self.given_cache = {}
@@ -715,6 +718,18 @@ class Karma(commands.Cog):
         if emoji_value == 0:
             return
 
+        starboard: Starboard = self.bot.get_cog("Starboard")
+        if starboard and reaction.channel_id in starboard.source_channels:
+            source_messages: StarboardMessage = StarboardMessage.get_all(
+                guild_id=reaction.guild_id, source_message_id=reaction.message_id
+            )
+            if source_messages:
+                duplicate = await starboard._check_duplicate(
+                    reaction, source_messages[0], is_source=True
+                )
+                if duplicate:
+                    return
+
         message: discord.Message = None
         try:
             message = await utils.discord.get_message(
@@ -734,21 +749,21 @@ class Karma(commands.Cog):
             )
             return
         if added:
-            await self.reaction_added(
+            self.reaction_added(
                 guild_id=reaction.guild_id,
                 msg_author_id=message.author.id,
                 react_author_id=reaction.user_id,
                 emoji_value=emoji_value,
             )
         else:
-            await self.reaction_removed(
+            self.reaction_removed(
                 guild_id=reaction.guild_id,
                 msg_author_id=message.author.id,
                 react_author_id=reaction.user_id,
                 emoji_value=emoji_value,
             )
 
-    async def reaction_added(
+    def reaction_added(
         self, guild_id: int, msg_author_id: int, react_author_id: int, emoji_value: int
     ):
         """Adds karma value using the cache (when reaction is added).
@@ -771,7 +786,7 @@ class Karma(commands.Cog):
             self.taken_cache.setdefault(react_author, 0)
             self.taken_cache[react_author] += -emoji_value
 
-    async def reaction_removed(
+    def reaction_removed(
         self, guild_id: int, msg_author_id: int, react_author_id: int, emoji_value: int
     ):
         """Removes karma value using the cache (when reaction is removed).
@@ -916,18 +931,30 @@ class Karma(commands.Cog):
         return ("large", 180, 15)
 
     @staticmethod
-    def get_emoji_value(guild_id: int, emoji: discord.PartialEmoji) -> int:
+    def get_emoji_value(
+        guild_id: int, emoji: Union[discord.PartialEmoji, discord.Emoji, str]
+    ) -> int:
         """Get's emoji value from DB (default 0)
 
         :param guild_id: ID of the guild
         :param emoji: Partial Emoji to get the karma value.
 
         :return: Emoji karma value"""
-        if emoji.is_custom_emoji():
-            emoji = DiscordEmoji.get(guild_id, emoji.id)
+
+        if isinstance(emoji, str):
+            db_emoji = UnicodeEmoji.get(guild_id, emoji)
+        elif isinstance(emoji, discord.PartialEmoji):
+            if emoji.is_custom_emoji():
+                db_emoji = DiscordEmoji.get(guild_id, emoji.id)
+            else:
+                db_emoji = UnicodeEmoji.get(guild_id, emoji.name)
         else:
-            emoji = UnicodeEmoji.get(guild_id, emoji.name)
-        emoji_value: int = getattr(emoji, "value", 0)
+            if getattr(emoji, "id", None) is not None:
+                db_emoji = DiscordEmoji.get(guild_id, emoji.id)
+            else:
+                db_emoji = UnicodeEmoji.get(guild_id, emoji.name)
+        print(db_emoji)
+        emoji_value: int = getattr(db_emoji, "value", 0)
 
         return emoji_value
 
@@ -941,5 +968,5 @@ class Karma(commands.Cog):
         return (guild_id, user_id)
 
 
-async def setup(bot) -> None:
+async def setup(bot: Strawberry) -> None:
     await bot.add_cog(Karma(bot))

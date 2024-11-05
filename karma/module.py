@@ -1,7 +1,7 @@
 import asyncio
 import math
 import re
-from typing import List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Set, Tuple, Union
 
 import discord
 from discord.ext import commands, tasks
@@ -9,8 +9,10 @@ from discord.ext import commands, tasks
 from pie import check, i18n, logger, utils
 from pie.bot import Strawberry
 
+if TYPE_CHECKING:
+    from ..starboard.module import Starboard
+
 from ..starboard.database import StarboardMessage
-from ..starboard.module import Starboard
 from .database import (
     BoardOrder,
     BoardType,

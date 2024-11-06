@@ -157,6 +157,24 @@ class StarboardMessage(database.base):
 
         return query.scalar()
 
+    def __repr__(self) -> str:
+        return (
+            f"<StarboardMessage idx='{self.idx}' "
+            f"guild_id='{self.guild_id}' author_id='{self.author_id}' "
+            f"source_channel_id='{self.source_channel_id}' source_message_id='{self.source_message_id}'"
+            f"starboard_channel_id='{self.starboard_channel_id}' starboard_channel_id='{self.starboard_channel_id}'>"
+        )
+
+    def dump(self) -> dict[str, int]:
+        return {
+            "guild_id": self.guild_id,
+            "author_id": self.author_id,
+            "source_channel_id": self.source_channel_id,
+            "source_message_id": self.source_message_id,
+            "starboard_channel_id": self.starboard_channel_id,
+            "starboard_message_id": self.starboard_message_id,
+        }
+
 
 class StarboardChannel(database.base):
     __tablename__ = "boards_starboard_channels"
@@ -262,3 +280,18 @@ class StarboardChannel(database.base):
         """Removes Starboard channel."""
         session.delete(self)
         session.commit()
+
+    def __repr__(self) -> str:
+        return (
+            f"<StarboardChannel idx='{self.idx}' "
+            f"guild_id='{self.guild_id}' source_channel_id='{self.source_channel_id}' "
+            f"starboard_channel_id='{self.starboard_channel_id}' limit='{self.limit}'>"
+        )
+
+    def dump(self) -> dict[str, int]:
+        return {
+            "guild_id": self.guild_id,
+            "source_channel_id": self.source_channel_id,
+            "starboard_channel_id": self.starboard_channel_id,
+            "limit": self.limit,
+        }

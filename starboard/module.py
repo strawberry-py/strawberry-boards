@@ -656,7 +656,7 @@ class Starboard(commands.Cog):
         attachments: list[discord.Attachment] = message.attachments
         msg_content: str = message.content
         embed_image: Union[discord.File, str] = None
-        secondary_attachments = []
+        secondary_attachments: list[Union[str, discord.File]] = []
         for attachment in attachments:
             try:
                 attachment_file = await attachment.to_file()

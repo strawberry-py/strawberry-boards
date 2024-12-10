@@ -580,6 +580,7 @@ class Starboard(commands.Cog):
                 guild_or_user_id=reaction.guild_id,
                 channel_id=reaction.channel_id,
                 message_id=reaction.message_id,
+                use_cache=False,  # We need fresh CDN link for attachments
             )
         except Exception:
             pass

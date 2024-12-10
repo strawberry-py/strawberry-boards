@@ -645,16 +645,17 @@ class Starboard(commands.Cog):
             )
 
     async def _process_attachments(
-        self, attachments: list[discord.Attachment], msg_content: str
+        self, message: discord.Message
     ) -> tuple[Optional[Union[discord.File, str]], list[Union[str, discord.File]]]:
         """Processes attachements for the repost.
 
-        :param attachments: List of original message attachments
-        :param msg_content: Text content of the original message
+        :param message: Original message to process
 
         :returns: Tuple with (optional) embed image and list of other attachments.
         """
-        embed_image = None
+        attachments: list[discord.Attachment] = message.attachments
+        msg_content: str = message.content
+        embed_image: Union[discord.File, str] = None
         secondary_attachments = []
         for attachment in attachments:
             try:
@@ -662,7 +663,7 @@ class Starboard(commands.Cog):
             except Exception as ex:
                 await guild_log.debug(
                     None,
-                    None,
+                    message.channel,
                     f"Error loading attachment {attachment.url}.",
                     exception=ex,
                 )
@@ -710,9 +711,7 @@ class Starboard(commands.Cog):
             inline=False,
         )
 
-        embed_image, sec_attachments = await self._process_attachments(
-            attachments=message.attachments, msg_content=message.content
-        )
+        embed_image, sec_attachments = await self._process_attachments(message=message)
         if embed_image is not None:
             embed.set_image(
                 url=(

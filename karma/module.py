@@ -748,7 +748,7 @@ class Karma(commands.Cog):
                 None,
                 None,
                 f"Message {reaction.message_id} not found on karma reaction add "
-                "by user {reaction.user_id} in channel {reaction.channel_id}.",
+                f"by user {reaction.user_id} in channel {reaction.channel_id}.",
             )
             return
         if added:

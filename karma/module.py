@@ -197,7 +197,7 @@ class Karma(commands.Cog):
         missing_emojis: int = 0
 
         def format_emojis(
-            emojis: List[Union[UnicodeEmoji, DiscordEmoji, int]]
+            emojis: List[Union[UnicodeEmoji, DiscordEmoji, int]],
         ) -> List[str]:
             """Format a list of emojis or emoji IDs."""
             nonlocal missing_emojis

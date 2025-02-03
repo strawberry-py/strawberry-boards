@@ -286,7 +286,7 @@ class Starboard(commands.Cog):
 
         await itx.response.defer(thinking=True, ephemeral=True)
         async for message in source.history(limit=limit, oldest_first=True):
-            fake_emoji = discord.PartialEmoji(name="\u2764\uFE0F")
+            fake_emoji = discord.PartialEmoji(name="\u2764\ufe0f")
 
             data = {
                 "user_id": itx.user.id,

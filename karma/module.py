@@ -745,9 +745,10 @@ class Karma(commands.Cog):
 
         if message is None:
             await guild_log.debug(
-                reaction.user_id,
-                reaction.channel_id,
-                f"Message {reaction.message_id} not found on karma reaction add.",
+                None,
+                None,
+                f"Message {reaction.message_id} not found on karma reaction add "
+                f"by user {reaction.user_id} in channel {reaction.channel_id}.",
             )
             return
         if added:

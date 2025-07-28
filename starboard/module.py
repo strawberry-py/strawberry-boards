@@ -653,8 +653,15 @@ class Starboard(commands.Cog):
 
         :returns: Tuple with (optional) embed image and list of other attachments.
         """
-        attachments: list[discord.Attachment] = message.attachments
-        msg_content: str = message.content
+        if not message.message_snapshots:
+            attachments: list[discord.Attachment] = message.attachments
+            msg_content: str = message.content
+        else:
+            attachments: list[discord.Attachment] = message.message_snapshots[
+                0
+            ].attachments
+            msg_content: str = message.message_snapshots[0].content
+
         embed_image: Union[discord.File, str] = None
         secondary_attachments: list[Union[str, discord.File]] = []
         for attachment in attachments:
@@ -721,7 +728,12 @@ class Starboard(commands.Cog):
                 )
             )
 
-        text: str = re.sub(URL_REGEX, "", message.content).strip()
+        content: str = (
+            message.content
+            if not message.message_snapshots
+            else message.message_snapshots[0].content
+        )
+        text: str = re.sub(URL_REGEX, "", content).strip()
         if text and len(embed) + len(text) < 5800:
             embed.add_field(name="Text:", value=text, inline=False)
 
